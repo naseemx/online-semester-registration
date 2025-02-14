@@ -1,19 +1,17 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../../utils/api';
-import { FaSearch, FaDownload, FaTrash, FaSpinner } from 'react-icons/fa';
+import { FaSearch, FaDownload, FaTrash, FaSpinner, FaHistory } from 'react-icons/fa';
+import styles from './Logs.module.css';
 import 'animate.css';
 
 const Logs = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [filters, setFilters] = useState({
-        search: '',
-        type: 'all',
-        startDate: '',
-        endDate: '',
-        page: 1
-    });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [logType, setLogType] = useState('all');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [pagination, setPagination] = useState({
         total: 0,
         pages: 1
@@ -23,13 +21,18 @@ const Logs = () => {
 
     useEffect(() => {
         fetchLogs();
-    }, [filters]);
+    }, [searchTerm, logType, startDate, endDate]);
 
     const fetchLogs = async () => {
         try {
             setLoading(true);
             setError('');
-            const response = await adminAPI.getLogs(filters);
+            const response = await adminAPI.getLogs({
+                search: searchTerm,
+                type: logType,
+                startDate: startDate,
+                endDate: endDate
+            });
             setLogs(response.data.data.logs);
             setPagination(response.data.data.pagination);
         } catch (err) {
@@ -45,9 +48,9 @@ const Logs = () => {
             setExporting(true);
             setError('');
             const response = await adminAPI.exportLogs({
-                type: filters.type,
-                startDate: filters.startDate,
-                endDate: filters.endDate
+                type: logType,
+                startDate: startDate,
+                endDate: endDate
             });
             
             // Convert to CSV
@@ -79,7 +82,7 @@ const Logs = () => {
         try {
             setClearing(true);
             setError('');
-            await adminAPI.clearLogs(filters.endDate || undefined);
+            await adminAPI.clearLogs(endDate || undefined);
             await fetchLogs();
         } catch (err) {
             setError('Error clearing logs');
@@ -103,197 +106,166 @@ const Logs = () => {
         return [headers, ...rows].map(row => row.join(',')).join('\n');
     };
 
-    const handleFilterChange = (name, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [name]: value,
-            page: name === 'page' ? value : 1
-        }));
-    };
-
     return (
-        <div className="container py-4">
-            <div className="card shadow animate__animated animate__fadeIn">
-                <div className="card-header bg-primary text-white">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <h4 className="mb-0">System Logs</h4>
-                        <div className="d-flex gap-2">
-                            <button
-                                className="btn btn-outline-light" 
-                                onClick={handleExport}
-                                disabled={exporting}
-                            >
-                                {exporting ? <FaSpinner className="spin" /> : <FaDownload />}
-                                {' '}Export
-                            </button>
-                            <button
-                                className="btn btn-outline-light" 
-                                onClick={handleClearLogs}
-                                disabled={clearing}
-                            >
-                                {clearing ? <FaSpinner className="spin" /> : <FaTrash />}
-                                {' '}Clear Logs
-                            </button>
-                        </div>
-                    </div>
+        <div className={styles['logs-container']}>
+            <div className={styles['logs-header']}>
+                <div className={styles['logs-title']}>
+                    <FaHistory />
+                    <h1>System Logs</h1>
                 </div>
-                <div className="card-body">
-                    {/* Filters */}
-                    <div className="row mb-4">
-                        <div className="col-md-3">
-                            <div className="input-group">
-                                <span className="input-group-text">
-                                    <FaSearch />
-                                </span>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Search logs..."
-                                    value={filters.search}
-                                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <div className="col-md-2">
-                                <select
-                                    className="form-select"
-                                value={filters.type}
-                                onChange={(e) => handleFilterChange('type', e.target.value)}
-                                >
-                                    <option value="all">All Types</option>
-                                <option value="auth">Authentication</option>
-                                <option value="student">Student</option>
-                                <option value="staff">Staff</option>
-                                <option value="tutor">Tutor</option>
-                                <option value="admin">Admin</option>
-                                <option value="system">System</option>
-                                </select>
-                        </div>
-                        <div className="col-md-3">
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                value={filters.startDate}
-                                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                                placeholder="Start Date"
-                                />
-                        </div>
-                        <div className="col-md-3">
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                value={filters.endDate}
-                                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                                placeholder="End Date"
-                                />
-                        </div>
-                    </div>
-
-                    {/* Error Message */}
-                    {error && (
-                        <div className="alert alert-danger animate__animated animate__shakeX">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Logs Table */}
-                    <div className="table-responsive">
-                        <table className="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>Type</th>
-                                    <th>User</th>
-                                    <th>Action</th>
-                                    <th>Details</th>
-                                    <th>IP Address</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan="6" className="text-center py-4">
-                                            <FaSpinner className="spin" /> Loading...
-                                        </td>
-                                    </tr>
-                                ) : logs.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="text-center py-4">
-                                            No logs found
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    logs.map((log) => (
-                                        <tr key={log._id} className="animate__animated animate__fadeIn">
-                                            <td>{new Date(log.timestamp).toLocaleString()}</td>
-                                            <td>
-                                                <span className={`badge bg-${getBadgeColor(log.type)}`}>
-                                                    {log.type}
-                                                </span>
-                                            </td>
-                                            <td>{log.user?.username || 'System'}</td>
-                                            <td>{log.action}</td>
-                                            <td>{log.details}</td>
-                                            <td>{log.ipAddress}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination */}
-                    {pagination.pages > 1 && (
-                        <div className="d-flex justify-content-center mt-4">
-                            <nav>
-                                <ul className="pagination">
-                                    <li className={`page-item ${filters.page === 1 ? 'disabled' : ''}`}>
-                                        <button
-                                            className="page-link"
-                                            onClick={() => handleFilterChange('page', filters.page - 1)}
-                                            disabled={filters.page === 1}
-                                        >
-                                            Previous
-                                        </button>
-                                    </li>
-                                    {[...Array(pagination.pages)].map((_, i) => (
-                                        <li
-                                            key={i + 1}
-                                            className={`page-item ${filters.page === i + 1 ? 'active' : ''}`}
-                                        >
-                                            <button
-                                                className="page-link"
-                                                onClick={() => handleFilterChange('page', i + 1)}
-                                            >
-                                                {i + 1}
-                                            </button>
-                                        </li>
-                                    ))}
-                                    <li className={`page-item ${filters.page === pagination.pages ? 'disabled' : ''}`}>
-                                        <button
-                                            className="page-link"
-                                            onClick={() => handleFilterChange('page', filters.page + 1)}
-                                            disabled={filters.page === pagination.pages}
-                                        >
-                                            Next
-                                        </button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    )}
+                <div className={styles['header-actions']}>
+                    <button
+                        className={styles['export-btn']}
+                        onClick={handleExport}
+                        disabled={exporting}
+                    >
+                        {exporting ? <FaSpinner className={styles['spin']} /> : <FaDownload />}
+                        Export
+                    </button>
+                    <button
+                        className={styles['clear-btn']}
+                        onClick={handleClearLogs}
+                        disabled={clearing}
+                    >
+                        {clearing ? <FaSpinner className={styles['spin']} /> : <FaTrash />}
+                        Clear Logs
+                    </button>
                 </div>
             </div>
 
-            <style jsx>{`
-                .spin {
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
+            <div className={styles['filters-section']}>
+                <div className={styles['search-box']}>
+                    <FaSearch className={styles['search-icon']} />
+                    <input
+                        type="text"
+                        placeholder="Search logs..."
+                        className={styles['search-input']}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <select 
+                    className={styles['filter-select']}
+                    value={logType}
+                    onChange={(e) => setLogType(e.target.value)}
+                >
+                    <option value="all">All Types</option>
+                    <option value="auth">Authentication</option>
+                    <option value="system">System</option>
+                    <option value="error">Error</option>
+                </select>
+
+                <input
+                    type="date"
+                    className={styles['date-picker']}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    placeholder="Start Date"
+                />
+
+                <input
+                    type="date"
+                    className={styles['date-picker']}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    placeholder="End Date"
+                />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className={styles['error-message']}>
+                    {error}
+                </div>
+            )}
+
+            {/* Logs Table */}
+            <div className={styles['logs-table']}>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Type</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
+                            <tr>
+                                <td colSpan="6" className={styles['loading']}>
+                                    <FaSpinner className={styles['spin']} /> Loading...
+                                </td>
+                            </tr>
+                        ) : logs.length === 0 ? (
+                            <tr>
+                                <td colSpan="6" className={styles['no-logs']}>
+                                    No logs found
+                                </td>
+                            </tr>
+                        ) : (
+                            logs.map((log) => (
+                                <tr key={log._id} className={styles['log-row']}>
+                                    <td>{new Date(log.timestamp).toLocaleString()}</td>
+                                    <td>
+                                        <span className={styles[`badge-${getBadgeColor(log.type)}`]}>
+                                            {log.type}
+                                        </span>
+                                    </td>
+                                    <td>{log.user?.username || 'System'}</td>
+                                    <td>{log.action}</td>
+                                    <td>{log.details}</td>
+                                    <td>{log.ipAddress}</td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+                <div className={styles['pagination']}>
+                    <nav>
+                        <ul>
+                            <li className={`${styles['page-item']} ${pagination.page === 1 ? styles['disabled'] : ''}`}>
+                                <button
+                                    className={styles['page-link']}
+                                    onClick={() => handleFilterChange('page', pagination.page - 1)}
+                                    disabled={pagination.page === 1}
+                                >
+                                    Previous
+                                </button>
+                            </li>
+                            {[...Array(pagination.pages)].map((_, i) => (
+                                <li
+                                    key={i + 1}
+                                    className={`${styles['page-item']} ${pagination.page === i + 1 ? styles['active'] : ''}`}
+                                >
+                                    <button
+                                        className={styles['page-link']}
+                                        onClick={() => handleFilterChange('page', i + 1)}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                </li>
+                            ))}
+                            <li className={`${styles['page-item']} ${pagination.page === pagination.pages ? styles['disabled'] : ''}`}>
+                                <button
+                                    className={styles['page-link']}
+                                    onClick={() => handleFilterChange('page', pagination.page + 1)}
+                                    disabled={pagination.page === pagination.pages}
+                                >
+                                    Next
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            )}
         </div>
     );
 };

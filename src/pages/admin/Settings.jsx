@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { adminAPI } from '../../utils/api';
 import { 
     FaCog, FaEnvelope, FaUniversity, FaCalendar, FaSave, 
@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import useForm from '../../hooks/useForm';
 import 'animate.css';
+import styles from './Settings.module.css';
 
 const Settings = () => {
     const [loading, setLoading] = useState(true);
@@ -140,294 +141,207 @@ const Settings = () => {
     }
 
     return (
-        <div className="container py-4">
-            <div className="card shadow animate__animated animate__fadeIn">
-                <div className="card-header bg-primary text-white">
-                    <h4 className="mb-0">
-                        <FaCog className="me-2" />
-                        System Settings
-                    </h4>
+        <div className={styles['settings-container']}>
+            <div className={styles['settings-card']}>
+                <div className={styles['settings-header']}>
+                    <FaCog />
+                    <h2>System Settings</h2>
                 </div>
-                <div className="card-body">
-                    {error && (
-                        <div className="alert alert-danger animate__animated animate__shakeX">
-                            {error}
-                        </div>
-                    )}
-                    {success && (
-                        <div className="alert alert-success animate__animated animate__fadeIn">
-                            {success}
-                        </div>
-                    )}
 
-                    <form onSubmit={handleSubmit(handleSaveSettings)}>
-                        {/* Email Settings */}
-                        <div className="card mb-4">
-                            <div className="card-header">
-                                <h5 className="mb-0">
-                                    <FaEnvelope className="me-2" />
-                                    Email Settings
-                                </h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <div className="form-check form-switch">
-                                            <input
-                                                type="checkbox"
-                                                className="form-check-input"
-                                                id="emailNotifications"
-                                                name="emailNotifications"
-                                                checked={values.emailNotifications}
-                                                onChange={(e) => setFieldValue('emailNotifications', e.target.checked)}
-                                            />
-                                            <label className="form-check-label" htmlFor="emailNotifications">
-                                                Enable Email Notifications
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Email Sender</label>
-                                        <input
-                                            type="email"
-                                            className="form-control"
-                                            name="emailSender"
-                                            value={values.emailSender}
-                                            onChange={handleChange}
-                                            placeholder="noreply@example.com"
-                                        />
-                                    </div>
-                                    <div className="col-12">
-                                        <label className="form-label">Email Template</label>
-                                        <textarea
-                                            className="form-control"
-                                            name="emailTemplate"
-                                            value={values.emailTemplate}
-                                            onChange={handleChange}
-                                            rows="3"
-                                            placeholder="Default email template with placeholders: {name}, {status}, etc."
-                                        />
-                                    </div>
-                                </div>
+                <form onSubmit={handleSubmit(handleSaveSettings)}>
+                    {/* Email Settings */}
+                    <div className={styles['settings-section']}>
+                        <h3>Email Settings</h3>
+                        <div className={styles['form-group']}>
+                            <div className={styles['toggle-switch']}>
+                                <input
+                                    type="checkbox"
+                                    id="emailNotifications"
+                                    checked={values.emailNotifications}
+                                    onChange={(e) => setFieldValue('emailNotifications', e.target.checked)}
+                                />
+                                <label htmlFor="emailNotifications" className={styles['toggle-label']}>
+                                    Enable Email Notifications
+                                </label>
                             </div>
                         </div>
 
-                        {/* Academic Settings */}
-                        <div className="card mb-4">
-                            <div className="card-header">
-                                <h5 className="mb-0">
-                                    <FaUniversity className="me-2" />
-                                    Academic Settings
-                                </h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <label className="form-label">Current Semester</label>
-                                        <select
-                                            className="form-select"
-                                            name="currentSemester"
-                                            value={values.currentSemester}
-                                            onChange={handleChange}
-                                        >
-                                            {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                                                <option key={num} value={num}>{num}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Academic Year</label>
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            name="academicYear"
-                                            value={values.academicYear}
-                                            onChange={handleChange}
-                                            min={2000}
-                                            max={2100}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Registration Deadline</label>
-                                        <input
-                                            type="date"
-                                            className="form-control"
-                                            name="registrationDeadline"
-                                            value={values.registrationDeadline}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Late Registration Fee ($)</label>
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            name="lateRegistrationFee"
-                                            value={values.lateRegistrationFee}
-                                            onChange={handleChange}
-                                            min="0"
-                                            step="0.01"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                        <div className={styles['form-group']}>
+                            <label>Email Sender</label>
+                            <input
+                                type="email"
+                                value={values.emailSender}
+                                onChange={handleChange}
+                                placeholder="noreply@example.com"
+                            />
                         </div>
 
-                        {/* System Settings */}
-                        <div className="card mb-4">
-                            <div className="card-header">
-                                <h5 className="mb-0">
-                                    <FaCalendar className="me-2" />
-                                    System Settings
-                                </h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <div className="form-check form-switch">
-                                            <input
-                                                type="checkbox"
-                                                className="form-check-input"
-                                                id="maintenanceMode"
-                                                name="maintenanceMode"
-                                                checked={values.maintenanceMode}
-                                                onChange={(e) => setFieldValue('maintenanceMode', e.target.checked)}
-                                            />
-                                            <label className="form-check-label" htmlFor="maintenanceMode">
-                                                Maintenance Mode
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Max Login Attempts</label>
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            name="maxLoginAttempts"
-                                            value={values.maxLoginAttempts}
-                                            onChange={handleChange}
-                                            min="1"
-                                            max="10"
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Session Timeout (minutes)</label>
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            name="sessionTimeout"
-                                            value={values.sessionTimeout}
-                                            onChange={handleChange}
-                                            min="5"
-                                            max="120"
-                                        />
-                                    </div>
-                                    <div className="col-12">
-                                        <label className="form-label">System Announcement</label>
-                                        <textarea
-                                            className="form-control"
-                                            name="systemAnnouncement"
-                                            value={values.systemAnnouncement}
-                                            onChange={handleChange}
-                                            rows="2"
-                                            placeholder="Display an announcement message to all users"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                        <div className={styles['form-group']}>
+                            <label>Email Template</label>
+                            <textarea
+                                value={values.emailTemplate}
+                                onChange={handleChange}
+                                placeholder="Default email template with placeholders: {name}, {status}, etc."
+                                rows={4}
+                            />
                         </div>
+                    </div>
 
-                        {/* System Backup */}
-                        <div className="card mb-4">
-                            <div className="card-header">
-                                <h5 className="mb-0">
-                                    <FaDatabase className="me-2" />
-                                    System Backup & Restore
-                                </h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <div className="card h-100">
-                                            <div className="card-body">
-                                                <h6 className="card-title">Backup System</h6>
-                                                <p className="card-text text-muted small">
-                                                    Create a backup of all system data including users, students, 
-                                                    settings, and registration records.
-                                                </p>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-primary w-100"
-                                                    onClick={handleBackup}
-                                                    disabled={backupLoading}
-                                                >
-                                                    {backupLoading ? (
-                                                        <>
-                                                            <FaSpinner className="me-2 animate__animated animate__rotateIn" />
-                                                            Creating Backup...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <FaDownload className="me-2" />
-                                                            Download Backup
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="card h-100">
-                                            <div className="card-body">
-                                                <h6 className="card-title">Restore System</h6>
-                                                <p className="card-text text-muted small">
-                                                    <FaExclamationTriangle className="text-warning me-1" />
-                                                    Warning: Restoring a backup will overwrite all current system data.
-                                                </p>
-                                                <div className="d-grid">
-                                                    <input
-                                                        type="file"
-                                                        className="form-control mb-2"
-                                                        accept=".json"
-                                                        onChange={handleRestore}
-                                                        disabled={restoreLoading}
-                                                        ref={fileInputRef}
-                                                    />
-                                                    {restoreLoading && (
-                                                        <div className="d-flex align-items-center justify-content-center text-primary">
-                                                            <FaSpinner className="me-2 animate__animated animate__rotateIn" />
-                                                            Restoring System...
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="d-grid">
-                            <button
-                                type="submit"
-                                className="btn btn-primary"
-                                disabled={saving}
+                    {/* Academic Settings */}
+                    <div className={styles['settings-section']}>
+                        <h3>Academic Settings</h3>
+                        <div className={styles['form-group']}>
+                            <label>Current Semester</label>
+                            <select
+                                value={values.currentSemester}
+                                onChange={handleChange}
                             >
-                                {saving ? (
-                                    <>
-                                        <FaSpinner className="me-2 animate__animated animate__rotateIn" />
-                                        Saving Changes...
-                                    </>
-                                ) : (
-                                    <>
-                                        <FaSave className="me-2" />
-                                        Save Settings
-                                    </>
-                                )}
-                            </button>
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                                    <option key={sem} value={sem}>{sem}</option>
+                                ))}
+                            </select>
                         </div>
-                    </form>
-                </div>
+
+                        <div className={styles['form-group']}>
+                            <label>Academic Year</label>
+                            <input
+                                type="number"
+                                value={values.academicYear}
+                                onChange={handleChange}
+                                min={2000}
+                                max={2100}
+                            />
+                        </div>
+
+                        <div className={styles['form-group']}>
+                            <label>Registration Deadline</label>
+                            <input
+                                type="date"
+                                value={values.registrationDeadline}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className={styles['form-group']}>
+                            <label>Late Registration Fee ($)</label>
+                            <input
+                                type="number"
+                                value={values.lateRegistrationFee}
+                                onChange={handleChange}
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+                    </div>
+
+                    {/* System Settings */}
+                    <div className={styles['settings-section']}>
+                        <h3>System Settings</h3>
+                        <div className={styles['form-group']}>
+                            <div className={styles['toggle-switch']}>
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceMode"
+                                    checked={values.maintenanceMode}
+                                    onChange={(e) => setFieldValue('maintenanceMode', e.target.checked)}
+                                />
+                                <label htmlFor="maintenanceMode" className={styles['toggle-label']}>
+                                    Maintenance Mode
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className={styles['form-group']}>
+                            <label>Max Login Attempts</label>
+                            <input
+                                type="number"
+                                value={values.maxLoginAttempts}
+                                onChange={handleChange}
+                                min="1"
+                                max="10"
+                            />
+                        </div>
+
+                        <div className={styles['form-group']}>
+                            <label>Session Timeout (minutes)</label>
+                            <input
+                                type="number"
+                                value={values.sessionTimeout}
+                                onChange={handleChange}
+                                min="5"
+                                max="120"
+                            />
+                        </div>
+
+                        <div className={styles['form-group']}>
+                            <label>System Announcement</label>
+                            <textarea
+                                value={values.systemAnnouncement}
+                                onChange={handleChange}
+                                placeholder="Display an announcement message to all users"
+                                rows={4}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Backup & Restore */}
+                    <div className={styles['settings-section']}>
+                        <h3>System Backup & Restore</h3>
+                        <div className={styles['backup-section']}>
+                            <p>Download a backup of your system data or restore from a previous backup.</p>
+                            <div className={styles['backup-buttons']}>
+                                <button
+                                    type="button"
+                                    className={styles['download-btn']}
+                                    onClick={handleBackup}
+                                    disabled={backupLoading}
+                                >
+                                    {backupLoading ? (
+                                        <>
+                                            <FaSpinner className="me-2 animate__animated animate__rotateIn" />
+                                            Creating Backup...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaDownload /> Download Backup
+                                        </>
+                                    )}
+                                </button>
+                                <div className={styles['upload-btn']}>
+                                    <FaUpload /> Choose File
+                                    <input
+                                        type="file"
+                                        hidden
+                                        accept=".json"
+                                        onChange={handleRestore}
+                                        disabled={restoreLoading}
+                                        ref={fileInputRef}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles['d-grid']}>
+                        <button
+                            type="submit"
+                            className={styles['save-button']}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <>
+                                    <FaSpinner className="me-2 animate__animated animate__rotateIn" />
+                                    Saving Changes...
+                                </>
+                            ) : (
+                                <>
+                                    <FaSave />
+                                    Save Settings
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

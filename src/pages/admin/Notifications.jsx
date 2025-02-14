@@ -119,97 +119,110 @@ const Notifications = () => {
                         </div>
                     )}
 
-                    {/* New Notification Form */}
+                    {/* Send Notification Form */}
                     {showForm && (
                         <div className="card mb-4 animate__animated animate__fadeIn">
                             <div className="card-body">
+                                <h5 className="card-title">Send New Notification</h5>
                                 <form onSubmit={handleSendNotification}>
-                                    <div className="row g-3">
+                                    <div className="mb-3">
+                                        <label className="form-label">Title</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={newNotification.title}
+                                            onChange={(e) => setNewNotification({
+                                                ...newNotification,
+                                                title: e.target.value
+                                            })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Message</label>
+                                        <textarea
+                                            className="form-control"
+                                            value={newNotification.message}
+                                            onChange={(e) => setNewNotification({
+                                                ...newNotification,
+                                                message: e.target.value
+                                            })}
+                                            required
+                                            rows="3"
+                                        />
+                                    </div>
+                                    <div className="row">
                                         <div className="col-md-6">
-                                            <label className="form-label">Title</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={newNotification.title}
-                                                onChange={(e) => setNewNotification(prev => ({
-                                                    ...prev,
-                                                    title: e.target.value
-                                                }))}
-                                                required
-                                            />
+                                            <div className="mb-3">
+                                                <label className="form-label">Type</label>
+                                                <select
+                                                    className="form-select"
+                                                    value={newNotification.type}
+                                                    onChange={(e) => setNewNotification({
+                                                        ...newNotification,
+                                                        type: e.target.value
+                                                    })}
+                                                >
+                                                    <option value="info">Information</option>
+                                                    <option value="success">Success</option>
+                                                    <option value="warning">Warning</option>
+                                                    <option value="error">Error</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div className="col-md-3">
-                                            <label className="form-label">Type</label>
-                                            <select
-                                                className="form-select"
-                                                value={newNotification.type}
-                                                onChange={(e) => setNewNotification(prev => ({
-                                                    ...prev,
-                                                    type: e.target.value
-                                                }))}
-                                            >
-                                                <option value="info">Info</option>
-                                                <option value="success">Success</option>
-                                                <option value="warning">Warning</option>
-                                                <option value="error">Error</option>
-                                            </select>
+                                        <div className="col-md-6">
+                                            <div className="mb-3">
+                                                <label className="form-label">Recipients</label>
+                                                <select
+                                                    className="form-select"
+                                                    value={newNotification.recipients}
+                                                    onChange={(e) => setNewNotification({
+                                                        ...newNotification,
+                                                        recipients: e.target.value
+                                                    })}
+                                                >
+                                                    <option value="all">All Users</option>
+                                                    <option value="students">Students Only</option>
+                                                    <option value="staff">Staff Only</option>
+                                                    <option value="tutors">Tutors Only</option>
+                                                    <option value="admins">Admins Only</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div className="col-md-3">
-                                            <label className="form-label">Recipients</label>
-                                            <select
-                                                className="form-select"
-                                                value={newNotification.recipients}
-                                                onChange={(e) => setNewNotification(prev => ({
-                                                    ...prev,
-                                                    recipients: e.target.value
-                                                }))}
-                                            >
-                                                <option value="all">All Users</option>
-                                                <option value="students">Students</option>
-                                                <option value="staff">Staff</option>
-                                                <option value="tutors">Tutors</option>
-                                                <option value="admins">Admins</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-12">
-                                            <label className="form-label">Message</label>
-                                            <textarea
-                                                className="form-control"
-                                                rows="3"
-                                                value={newNotification.message}
-                                                onChange={(e) => setNewNotification(prev => ({
-                                                    ...prev,
-                                                    message: e.target.value
-                                                }))}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="col-12">
-                                            <button
-                                                type="submit"
-                                                className="btn btn-primary"
-                                                disabled={sending}
-                                            >
-                                                {sending ? (
-                                                    <>
-                                                        <FaSpinner className="me-2 animate__animated animate__rotateIn" />
-                                                        Sending...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <FaEnvelope className="me-2" />
-                                                        Send Notification
-                                                    </>
-                                                )}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary ms-2"
-                                                onClick={() => setShowForm(false)}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
+                                    </div>
+                                    <div className="d-flex justify-content-end gap-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => {
+                                                setShowForm(false);
+                                                setNewNotification({
+                                                    title: '',
+                                                    message: '',
+                                                    type: 'info',
+                                                    recipients: 'all'
+                                                });
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary"
+                                            disabled={sending}
+                                        >
+                                            {sending ? (
+                                                <>
+                                                    <FaSpinner className="me-2 spin" />
+                                                    Sending...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FaEnvelope className="me-2" />
+                                                    Send Notification
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                 </form>
                             </div>

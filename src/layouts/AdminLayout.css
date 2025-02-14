@@ -1,0 +1,222 @@
+/* Root Variables for Theming */
+:root {
+    /* Light Theme Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fd;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+    --accent-color: #2563eb;
+    --accent-hover: #1d4ed8;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --danger-color: #dc2626;
+    --card-bg: #ffffff;
+}
+
+/* Dark Theme Colors */
+.dark-mode {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #a3a3a3;
+    --border-color: #404040;
+    --accent-color: #3b82f6;
+    --accent-hover: #60a5fa;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --card-bg: #2d2d2d;
+}
+
+/* Layout Structure */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 280px;
+    background-color: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 4px var(--shadow-color);
+    z-index: 100;
+}
+
+.sidebar.closed {
+    width: 80px;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin: 0;
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.theme-toggle:hover {
+    color: var(--accent-color);
+    background-color: var(--bg-secondary);
+}
+
+/* Navigation Items */
+.sidebar-nav {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    background: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+.nav-item:hover {
+    background-color: var(--bg-secondary);
+    color: var(--accent-color);
+}
+
+.nav-item.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.nav-icon {
+    font-size: 1.25rem;
+    margin-right: 1rem;
+    min-width: 1.25rem;
+}
+
+.sidebar.closed .nav-label {
+    display: none;
+}
+
+/* Logout Button */
+.logout-btn {
+    margin-top: auto;
+    color: var(--danger-color);
+}
+
+.logout-btn:hover {
+    background-color: #fee2e2;
+    color: var(--danger-color);
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    background-color: var(--bg-secondary);
+}
+
+/* Page Content */
+.page-content {
+    padding: 2rem;
+    flex: 1;
+}
+
+/* Card Styles */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+/* Form Controls */
+input, select, textarea {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+/* Buttons */
+button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: var(--accent-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        height: 100vh;
+    }
+
+    .sidebar.closed {
+        transform: translateX(-100%);
+    }
+
+    .page-content {
+        padding: 1rem;
+    }
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.sidebar {
+    animation: slideIn 0.3s ease;
+} 

@@ -1,81 +1,40 @@
 import { useState } from 'react';
 import { tutorAPI } from '../../utils/api';
-import { FaFileDownload, FaSpinner, FaChartBar } from 'react-icons/fa';
+import { FaDownload, FaSpinner } from 'react-icons/fa';
 import 'animate.css';
 
 const Reports = () => {
-    const [loading, setLoading] = useState(false);
+    const [downloading, setDownloading] = useState(null);
     const [error, setError] = useState('');
-    const [activeReport, setActiveReport] = useState(null);
 
-    const reports = [
-        {
-            id: 'completed',
-            title: 'Completed Registrations',
-            description: 'List of students who have completed their semester registration',
-            icon: <FaFileDownload className="text-success" size={24} />
-        },
-        {
-            id: 'pending',
-            title: 'Pending Registrations',
-            description: 'List of students with pending or incomplete registrations',
-            icon: <FaFileDownload className="text-warning" size={24} />
-        },
-        {
-            id: 'fines',
-            title: 'Pending Fines Report',
-            description: 'List of students with pending fines and dues',
-            icon: <FaFileDownload className="text-danger" size={24} />
-        }
-    ];
-
-    const generateReport = async (type) => {
+    const handleDownload = async (type) => {
         try {
-            setLoading(true);
+            setDownloading(type);
             setError('');
-            setActiveReport(type);
-            
+
             const response = await tutorAPI.generateReport(type);
-            const data = response.data.data;
-
-            // Convert data to CSV
-            let csv = '';
-            if (data.length > 0) {
-                // Headers
-                const headers = Object.keys(data[0]).filter(key => 
-                    !key.startsWith('_') && key !== '__v'
-                );
-                csv += headers.join(',') + '\n';
-
-                // Data rows
-                data.forEach(row => {
-                    const values = headers.map(header => {
-                        const value = row[header];
-                        // Handle nested objects and arrays
-                        if (typeof value === 'object' && value !== null) {
-                            return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
-                        }
-                        return `"${value}"`;
-                    });
-                    csv += values.join(',') + '\n';
-                });
-            }
-
-            // Create and download file
-            const blob = new Blob([csv], { type: 'text/csv' });
+            
+            // Create a blob from the response data
+            const blob = new Blob([response.data], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+            
+            // Create download link
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${type}-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `${type}_report.xlsx`;
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
+            
+            // Cleanup
             window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
         } catch (err) {
-            setError('Error generating report');
+            console.error('Download error:', err);
+            setError('Error downloading report');
         } finally {
-            setLoading(false);
-            setActiveReport(null);
+            setDownloading(null);
         }
     };
 
@@ -83,10 +42,7 @@ const Reports = () => {
         <div className="container py-4">
             <div className="card shadow animate__animated animate__fadeIn">
                 <div className="card-header bg-primary text-white">
-                    <h4 className="mb-0">
-                        <FaChartBar className="me-2" />
-                        Generate Reports
-                    </h4>
+                    <h4 className="mb-0">Generate Reports</h4>
                 </div>
                 <div className="card-body">
                     {error && (
@@ -96,56 +52,139 @@ const Reports = () => {
                     )}
 
                     <div className="row g-4">
-                        {reports.map((report) => (
-                            <div key={report.id} className="col-md-4">
-                                <div className="card h-100 animate__animated animate__fadeIn">
-                                    <div className="card-body">
-                                        <div className="d-flex align-items-center mb-3">
-                                            {report.icon}
-                                            <h5 className="mb-0 ms-2">{report.title}</h5>
-                                        </div>
-                                        <p className="text-muted">
-                                            {report.description}
-                                        </p>
-                                        <button
-                                            className="btn btn-primary w-100"
-                                            onClick={() => generateReport(report.id)}
-                                            disabled={loading && activeReport === report.id}
-                                        >
-                                            {loading && activeReport === report.id ? (
-                                                <>
-                                                    <FaSpinner className="me-2 animate__animated animate__rotateIn" />
-                                                    Generating...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <FaFileDownload className="me-2" />
-                                                    Download Report
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
+                        {/* Completed Registrations Report */}
+                        <div className="col-md-4">
+                            <div className="card h-100">
+                                <div className="card-body">
+                                    <h5 className="card-title text-success">
+                                        <FaDownload className="me-2" />
+                                        Completed Registrations
+                                    </h5>
+                                    <p className="card-text">
+                                        List of students who have completed their semester registration
+                                    </p>
+                                    <button
+                                        className="btn btn-success w-100"
+                                        onClick={() => handleDownload('completed')}
+                                        disabled={downloading === 'completed'}
+                                    >
+                                        {downloading === 'completed' ? (
+                                            <>
+                                                <FaSpinner className="me-2 spin" />
+                                                Downloading...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaDownload className="me-2" />
+                                                Download Report
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Pending Registrations Report */}
+                        <div className="col-md-4">
+                            <div className="card h-100">
+                                <div className="card-body">
+                                    <h5 className="card-title text-warning">
+                                        <FaDownload className="me-2" />
+                                        Pending Registrations
+                                    </h5>
+                                    <p className="card-text">
+                                        List of students with pending or incomplete registrations
+                                    </p>
+                                    <button
+                                        className="btn btn-warning w-100"
+                                        onClick={() => handleDownload('pending')}
+                                        disabled={downloading === 'pending'}
+                                    >
+                                        {downloading === 'pending' ? (
+                                            <>
+                                                <FaSpinner className="me-2 spin" />
+                                                Downloading...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaDownload className="me-2" />
+                                                Download Report
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Pending Fines Report */}
+                        <div className="col-md-4">
+                            <div className="card h-100">
+                                <div className="card-body">
+                                    <h5 className="card-title text-danger">
+                                        <FaDownload className="me-2" />
+                                        Pending Fines Report
+                                    </h5>
+                                    <p className="card-text">
+                                        List of students with pending fines and dues
+                                    </p>
+                                    <button
+                                        className="btn btn-danger w-100"
+                                        onClick={() => handleDownload('fines')}
+                                        disabled={downloading === 'fines'}
+                                    >
+                                        {downloading === 'fines' ? (
+                                            <>
+                                                <FaSpinner className="me-2 spin" />
+                                                Downloading...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaDownload className="me-2" />
+                                                Download Report
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
+                    {/* Report Information */}
                     <div className="mt-4">
                         <h5>Report Information</h5>
-                        <ul className="list-group">
-                            <li className="list-group-item">
-                                <strong>Completed Registrations Report:</strong> Contains details of students who have successfully completed their semester registration, including verification statuses and registration date.
-                            </li>
-                            <li className="list-group-item">
-                                <strong>Pending Registrations Report:</strong> Lists students with incomplete registrations, including their current verification status and any pending requirements.
-                            </li>
-                            <li className="list-group-item">
-                                <strong>Pending Fines Report:</strong> Provides information about students with outstanding fines or dues, including the amount and category of each fine.
-                            </li>
-                        </ul>
+                        <div className="list-group">
+                            <div className="list-group-item">
+                                <h6 className="mb-1">Completed Registrations Report:</h6>
+                                <p className="mb-0 text-muted">
+                                    Contains details of students who have successfully completed their semester registration, including verification statuses and registration date.
+                                </p>
+                            </div>
+                            <div className="list-group-item">
+                                <h6 className="mb-1">Pending Registrations Report:</h6>
+                                <p className="mb-0 text-muted">
+                                    Lists students with incomplete registrations, including their current verification status and any pending requirements.
+                                </p>
+                            </div>
+                            <div className="list-group-item">
+                                <h6 className="mb-1">Pending Fines Report:</h6>
+                                <p className="mb-0 text-muted">
+                                    Provides information about students with outstanding fines or dues, including the amount and category of each fine.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <style jsx>{`
+                .spin {
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     );
 };

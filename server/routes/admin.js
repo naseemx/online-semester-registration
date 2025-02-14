@@ -13,6 +13,16 @@ const {
     deleteNotification 
 } = require('../controllers/notificationController');
 
+// Helper function to format currency in INR
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(amount);
+};
+
 // All routes require authentication and admin role
 router.use(isAuthenticated);
 router.use(hasRole(['admin']));
@@ -147,7 +157,7 @@ router.get('/dashboard/stats', async (req, res) => {
                 totalStaff,
                 completedRegistrations,
                 pendingRegistrations,
-                pendingFines
+                pendingFines: formatCurrency(pendingFines)
             }
         });
     } catch (error) {
@@ -264,6 +274,73 @@ router.put('/users/:id', async (req, res) => {
     }
 });
 
+// Create user
+router.post('/users', async (req, res) => {
+    try {
+        const { username, email, password, role } = req.body;
+
+        // Check if username is taken
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username is already taken'
+            });
+        }
+
+        // Check if email is taken
+        const existingEmail = await User.findOne({ email });
+        if (existingEmail) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is already taken'
+            });
+        }
+
+        // Create new user
+        const user = new User({
+            username,
+            email,
+            password,
+            role
+        });
+
+        await user.save();
+
+        // Create log entry
+        try {
+            const log = new Log({
+                type: 'admin',
+                user: req.user._id,
+                action: 'create_user',
+                details: `Created new user ${username} with role ${role}`,
+                ipAddress: req.ip,
+                userAgent: req.get('user-agent')
+            });
+            await log.save();
+        } catch (logError) {
+            console.error('Error creating log:', logError);
+            // Continue even if logging fails
+        }
+
+        // Return user without password
+        const userResponse = user.toObject();
+        delete userResponse.password;
+
+        res.status(201).json({
+            success: true,
+            data: userResponse,
+            message: 'User created successfully'
+        });
+    } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error creating user'
+        });
+    }
+});
+
 // Student management routes
 router.get('/students', async (req, res) => {
     try {
@@ -328,6 +405,18 @@ router.post('/students', async (req, res) => {
         });
 
         await user.save();
+
+        // Create initial fine record for the student
+        const fine = new Fine({
+            student: student._id,
+            tuition: { amount: 0, status: 'paid' },
+            transportation: { amount: 0, status: 'paid' },
+            hostelFees: { amount: 0, status: 'paid' },
+            labFines: { amount: 0, status: 'paid' },
+            libraryFines: { amount: 0, status: 'paid' }
+        });
+
+        await fine.save();
 
         res.status(201).json({
             success: true,

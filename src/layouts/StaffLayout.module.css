@@ -1,0 +1,128 @@
+.layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease;
+    z-index: 100;
+}
+
+.logo {
+    margin-bottom: 2rem;
+    padding: 0.5rem;
+}
+
+.logo a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.logo a:hover {
+    color: var(--accent-hover);
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.navItem:hover {
+    background-color: var(--bg-secondary);
+    color: var(--accent-color);
+    transform: translateX(5px);
+}
+
+.navItem.active {
+    background-color: var(--accent-bg);
+    color: var(--accent-color);
+}
+
+.navItem svg {
+    font-size: 1.25rem;
+    color: currentColor;
+}
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-left: 250px;
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+} 

@@ -1,0 +1,365 @@
+.container {
+    padding: 2rem;
+    min-height: calc(100vh - var(--header-height));
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.row {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.studentList {
+    flex: 1;
+    min-width: 300px;
+}
+
+.finesSection {
+    flex: 2;
+    min-width: 400px;
+}
+
+.card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.cardHeader {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: #3b82f6;
+    border-radius: 8px 8px 0 0;
+}
+
+.headerTitle {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.cardBody {
+    padding: 1rem;
+}
+
+.searchContainer {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background-color: white;
+    color: #111827;
+}
+
+.searchInput::placeholder {
+    color: #9ca3af;
+}
+
+.studentsList {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.studentItem {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: white;
+}
+
+.studentItem:hover {
+    background-color: #f3f4f6;
+    border-color: #3b82f6;
+}
+
+.studentItem.active {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+}
+
+.studentName {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.admissionNumber {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.pendingBadge {
+    background-color: #ef4444;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.fineCard {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.fineCard:last-child {
+    border-bottom: none;
+}
+
+.fineInputGroup {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fineLabel {
+    flex: 1;
+    color: #111827;
+    font-weight: 500;
+}
+
+.amountInput {
+    width: 120px;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background-color: white;
+    color: #111827;
+    text-align: right;
+}
+
+.amountInput:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.statusToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: none;
+}
+
+.statusToggle.paid {
+    color: #059669;
+}
+
+.statusToggle.paid:hover {
+    background-color: #ecfdf5;
+}
+
+.statusToggle.pending {
+    color: #dc2626;
+}
+
+.statusToggle.pending:hover {
+    background-color: #fef2f2;
+}
+
+.updateButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+.updateButton:hover {
+    background-color: #2563eb;
+}
+
+.errorMessage {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-radius: 4px;
+    animation: shake 0.5s ease;
+}
+
+.successMessage {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #dcfce7;
+    color: #166534;
+    border-radius: 4px;
+    animation: fadeIn 0.3s ease;
+}
+
+.noSelection {
+    text-align: center;
+    color: #6b7280;
+    margin: 2rem 0;
+}
+
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--header-height));
+    color: #111827;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #3b82f6;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Scrollbar Styles */
+.studentsList::-webkit-scrollbar {
+    width: 8px;
+}
+
+.studentsList::-webkit-scrollbar-track {
+    background: #f3f4f6;
+}
+
+.studentsList::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.studentsList::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Dark mode overrides */
+:global(.dark-mode) .card {
+    background-color: var(--bg-primary);
+}
+
+:global(.dark-mode) .searchInput,
+:global(.dark-mode) .amountInput {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+:global(.dark-mode) .studentItem {
+    background-color: var(--bg-primary);
+    border-color: var(--border-color);
+}
+
+:global(.dark-mode) .studentItem:hover {
+    background-color: var(--bg-hover);
+}
+
+:global(.dark-mode) .studentName {
+    color: var(--text-primary);
+}
+
+:global(.dark-mode) .admissionNumber {
+    color: var(--text-secondary);
+}
+
+:global(.dark-mode) .fineLabel {
+    color: var(--text-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .row {
+        flex-direction: column;
+    }
+
+    .studentList,
+    .finesSection {
+        flex: none;
+        width: 100%;
+    }
+
+    .fineInputGroup {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .amountInput {
+        width: 100%;
+    }
+
+    .statusToggle {
+        width: 100%;
+        height: 48px;
+        border-radius: 4px;
+    }
+} 

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaEnvelope } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
@@ -40,6 +40,12 @@ const Navbar = () => {
                     <>
                         <li className="nav-item">
                             <Link className="nav-link" to="/tutor/registrations">Registrations</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/tutor/semester-email">
+                                <FaEnvelope className="me-1" />
+                                Send Emails
+                            </Link>
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link" to="/tutor/reports">Reports</Link>

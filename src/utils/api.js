@@ -8,8 +8,50 @@ const api = axios.create({
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
-    }
+    },
+    timeout: 10000, // 10 second timeout
 });
+
+// Request interceptor
+api.interceptors.request.use(
+    (config) => {
+        // Add any request preprocessing here
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor with retry logic
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        // If the error is a network error or 5xx error, and we haven't retried yet
+        if ((error.message.includes('Network Error') || (error.response?.status >= 500 && error.response?.status <= 599)) && !originalRequest._retry) {
+            originalRequest._retry = true;
+            
+            // Wait for 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Retry the request
+            return api(originalRequest);
+        }
+
+        // Handle unauthorized access
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+        }
+
+        // Format error message
+        const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+        error.formattedMessage = errorMessage;
+
+        return Promise.reject(error);
+    }
+);
 
 // Authentication API calls
 export const authAPI = {
@@ -35,8 +77,14 @@ export const staffAPI = {
 // Tutor API calls
 export const tutorAPI = {
     getRegistrations: (status) => api.get('/tutor/registrations', { params: { status } }),
-    approveRegistration: (studentId) => api.post(`/tutor/registrations/${studentId}/approve`),
-    generateReport: (type) => api.get(`/tutor/reports/${type}`)
+    sendStatusEmail: (studentId) => api.post(`/tutor/registrations/${studentId}/send-status`),
+    generateReport: (type) => api.get(`/tutor/reports/${type}`, { 
+        responseType: 'arraybuffer',
+        headers: {
+            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }
+    }),
+    sendSemesterEmail: (data) => api.post('/tutor/semester-email', data)
 };
 
 // Admin API calls
@@ -66,17 +114,5 @@ export const adminAPI = {
     markNotificationAsRead: (id) => api.put(`/admin/notifications/${id}/read`),
     deleteNotification: (id) => api.delete(`/admin/notifications/${id}`)
 };
-
-// Error handler interceptor
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Handle unauthorized access
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
 
 export default api; 

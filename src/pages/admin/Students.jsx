@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { adminAPI } from '../../utils/api';
 import { FaGraduationCap, FaSearch, FaPlus, FaEdit, FaTrash, FaSpinner } from 'react-icons/fa';
 import useForm from '../../hooks/useForm';
+import styles from './Students.module.css';
 import 'animate.css';
 
 const Students = () => {
@@ -94,53 +95,53 @@ const Students = () => {
     );
 
     return (
-        <div className="container py-4">
+        <div className={styles.container}>
             <div className="row">
                 {/* Student List */}
                 <div className={showForm ? 'col-md-8' : 'col-12'}>
-                    <div className="card shadow animate__animated animate__fadeIn">
-                        <div className="card-header bg-primary text-white">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <h4 className="mb-0">
-                                    <FaGraduationCap className="me-2" />
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerContent}>
+                                <h4 className={styles.headerTitle}>
+                                    <FaGraduationCap />
                                     Students
                                 </h4>
-                                <div className="d-flex gap-2">
-                                    <div className="input-group">
-                                        <span className="input-group-text">
+                                <div className={styles.searchContainer}>
+                                    <div className={styles.searchGroup}>
+                                        <span className={styles.searchIcon}>
                                             <FaSearch />
                                         </span>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={styles.searchInput}
                                             placeholder="Search students..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                         />
                                     </div>
                                     <button
-                                        className="btn btn-success"
+                                        className={styles.addButton}
                                         onClick={() => {
                                             setEditingStudent(null);
                                             reset();
                                             setShowForm(true);
                                         }}
                                     >
-                                        <FaPlus className="me-1" />
+                                        <FaPlus />
                                         Add Student
                                     </button>
                                 </div>
                             </div>
                         </div>
-                        <div className="card-body">
+                        <div className={styles.cardBody}>
                             {error && (
-                                <div className="alert alert-danger animate__animated animate__shakeX">
+                                <div className={styles.errorAlert}>
                                     {error}
                                 </div>
                             )}
 
-                            <div className="table-responsive">
-                                <table className="table table-hover align-middle">
+                            <div className={styles.tableContainer}>
+                                <table className={styles.table}>
                                     <thead>
                                         <tr>
                                             <th>Name</th>
@@ -153,31 +154,31 @@ const Students = () => {
                                     </thead>
                                     <tbody>
                                         {filteredStudents.map((student) => (
-                                            <tr key={student._id} className="animate__animated animate__fadeIn">
+                                            <tr key={student._id}>
                                                 <td>{student.name}</td>
                                                 <td>{student.admissionNumber}</td>
                                                 <td>{student.department}</td>
                                                 <td>{student.semester}</td>
                                                 <td>
                                                     <div>
-                                                        <small className="text-muted d-block">{student.email}</small>
+                                                        <small className={styles.emailText}>{student.email}</small>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div className="btn-group">
+                                                    <div className={styles.actionButtons}>
                                                         <button
-                                                            className="btn btn-sm btn-primary"
+                                                            className={styles.editButton}
                                                             onClick={() => handleEdit(student)}
                                                         >
                                                             <FaEdit />
                                                         </button>
                                                         <button
-                                                            className="btn btn-sm btn-danger"
+                                                            className={styles.deleteButton}
                                                             onClick={() => handleDeleteStudent(student._id)}
                                                             disabled={deleting === student._id}
                                                         >
                                                             {deleting === student._id ? (
-                                                                <FaSpinner className="animate__animated animate__rotateIn" />
+                                                                <FaSpinner className={styles.spinner} />
                                                             ) : (
                                                                 <FaTrash />
                                                             )}
@@ -196,62 +197,62 @@ const Students = () => {
                 {/* Student Form */}
                 {showForm && (
                     <div className="col-md-4">
-                        <div className="card shadow animate__animated animate__fadeInRight">
-                            <div className="card-header bg-primary text-white">
-                                <h4 className="mb-0">
+                        <div className={styles.formCard}>
+                            <div className={styles.formHeader}>
+                                <h4 className={styles.headerTitle}>
                                     {editingStudent ? 'Edit Student' : 'Add Student'}
                                 </h4>
                             </div>
-                            <div className="card-body">
+                            <div className={styles.formBody}>
                                 <form onSubmit={handleSubmit(editingStudent ? handleUpdateStudent : handleCreateStudent)}>
-                                    <div className="mb-3">
-                                        <label className="form-label">Name</label>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Name</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={styles.formInput}
                                             name="name"
                                             value={values.name}
                                             onChange={handleChange}
                                             required
                                         />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Admission Number</label>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Admission Number</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={styles.formInput}
                                             name="admissionNumber"
                                             value={values.admissionNumber}
                                             onChange={handleChange}
                                             required
                                         />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">University Register Number</label>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>University Register Number</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={styles.formInput}
                                             name="universityRegisterNumber"
                                             value={values.universityRegisterNumber}
                                             onChange={handleChange}
                                             required
                                         />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Department</label>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Department</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={styles.formInput}
                                             name="department"
                                             value={values.department}
                                             onChange={handleChange}
                                             required
                                         />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Semester</label>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Semester</label>
                                         <select
-                                            className="form-select"
+                                            className={styles.formSelect}
                                             name="semester"
                                             value={values.semester}
                                             onChange={handleChange}
@@ -262,24 +263,24 @@ const Students = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Email</label>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Email</label>
                                         <input
                                             type="email"
-                                            className="form-control"
+                                            className={styles.formInput}
                                             name="email"
                                             value={values.email}
                                             onChange={handleChange}
                                             required
                                         />
                                     </div>
-                                    <div className="d-grid gap-2">
-                                        <button type="submit" className="btn btn-primary">
+                                    <div className={styles.formButtons}>
+                                        <button type="submit" className={styles.submitButton}>
                                             {editingStudent ? 'Update Student' : 'Create Student'}
                                         </button>
                                         <button
                                             type="button"
-                                            className="btn btn-secondary"
+                                            className={styles.cancelButton}
                                             onClick={() => {
                                                 setShowForm(false);
                                                 setEditingStudent(null);

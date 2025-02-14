@@ -33,18 +33,18 @@ const studentSchema = new mongoose.Schema({
     // Verification statuses
     libraryStatus: {
         type: String,
-        enum: ['pending', 'clear', 'fine pending'],
-        default: 'pending'
+        enum: ['clear', 'fine pending'],
+        default: 'clear'
     },
     labStatus: {
         type: String,
-        enum: ['pending', 'clear', 'fine pending'],
-        default: 'pending'
+        enum: ['clear', 'fine pending'],
+        default: 'clear'
     },
     officeStatus: {
         type: String,
-        enum: ['pending', 'clear', 'fine pending'],
-        default: 'pending'
+        enum: ['clear', 'fine pending'],
+        default: 'clear'
     },
     // Registration status
     registrationStatus: {
@@ -53,6 +53,13 @@ const studentSchema = new mongoose.Schema({
         default: 'not started'
     },
     registrationCompletedAt: {
+        type: Date
+    },
+    registrationApproved: {
+        type: Boolean,
+        default: false
+    },
+    registrationApprovedAt: {
         type: Date
     }
 }, {
@@ -63,7 +70,8 @@ const studentSchema = new mongoose.Schema({
 studentSchema.virtual('isEligibleForRegistration').get(function() {
     return this.libraryStatus === 'clear' && 
            this.labStatus === 'clear' && 
-           this.officeStatus === 'clear';
+           this.officeStatus === 'clear' &&
+           this.registrationStatus === 'completed';
 });
 
 module.exports = mongoose.model('Student', studentSchema); 

@@ -13,6 +13,14 @@ const getNotifications = async (req, res) => {
             query.read = false;
         }
 
+        // Filter notifications based on user role
+        if (req.user.role !== 'admin') {
+            query.$or = [
+                { recipients: 'all' },
+                { recipients: req.user.role + 's' } // Add 's' to match the enum values (students, staff, tutors)
+            ];
+        }
+
         const notifications = await Notification.find(query)
             .sort({ createdAt: -1 })
             .populate('createdBy', 'username');
@@ -96,7 +104,15 @@ const deleteNotification = async (req, res) => {
             });
         }
 
-        await notification.remove();
+        // Only allow admins or the creator to delete notifications
+        if (req.user.role !== 'admin' && notification.createdBy.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to delete this notification'
+            });
+        }
+
+        await Notification.deleteOne({ _id: req.params.id });
 
         res.json({
             success: true,

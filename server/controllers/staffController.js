@@ -1,15 +1,60 @@
 const Student = require('../models/Student');
 const Fine = require('../models/Fine');
 
+// Helper function to format currency in INR
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(amount);
+};
+
 // Get all student fines
 const getAllStudentFines = async (req, res) => {
     try {
-        const fines = await Fine.find()
-            .populate('student', 'name admissionNumber semester department');
+        // Get all students
+        const students = await Student.find();
+        
+        // Get all fines
+        const fines = await Fine.find().populate('student', 'name admissionNumber semester department');
+        
+        // Create a map of student ID to fine record
+        const fineMap = new Map(fines.map(fine => [fine.student._id.toString(), fine]));
+        
+        // Create or get fines for each student
+        const allStudentFines = await Promise.all(students.map(async (student) => {
+            let fine = fineMap.get(student._id.toString());
+            
+            // If student doesn't have a fine record, create one
+            if (!fine) {
+                fine = new Fine({
+                    student: student._id,
+                    tuition: { amount: 0, status: 'paid' },
+                    transportation: { amount: 0, status: 'paid' },
+                    hostelFees: { amount: 0, status: 'paid' },
+                    labFines: { amount: 0, status: 'paid' },
+                    libraryFines: { amount: 0, status: 'paid' }
+                });
+                await fine.save();
+                
+                // Populate the student field
+                fine.student = {
+                    _id: student._id,
+                    name: student.name,
+                    admissionNumber: student.admissionNumber,
+                    semester: student.semester,
+                    department: student.department
+                };
+            }
+            
+            return fine;
+        }));
 
         res.json({
             success: true,
-            data: fines
+            data: allStudentFines
         });
     } catch (error) {
         console.error('Get all fines error:', error);

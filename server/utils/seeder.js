@@ -27,7 +27,7 @@ const sampleStudents = [
         email: 'jane.smith@example.com',
         libraryStatus: 'fine pending',
         labStatus: 'clear',
-        officeStatus: 'pending'
+        officeStatus: 'fine pending'
     },
     // Add more sample students here...
 ];
