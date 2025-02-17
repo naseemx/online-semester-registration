@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { FaBell } from 'react-icons/fa';
+import { FaBell, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import 'animate.css';
+import styles from './Header.module.css';
 
 const NotificationBell = () => {
     const [notifications, setNotifications] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [error, setError] = useState(null);
     const { user } = useAuth();
 
     useEffect(() => {
@@ -20,57 +21,92 @@ const NotificationBell = () => {
 
     const fetchNotifications = async () => {
         try {
+            setError(null);
             const response = await api.get('/notifications/unread');
-            setNotifications(response.data.data);
+            if (response.data.success) {
+                setNotifications(response.data.data);
+            } else {
+                throw new Error(response.data.message || 'Failed to fetch notifications');
+            }
         } catch (error) {
             console.error('Error fetching notifications:', error);
+            setError('Failed to load notifications');
+            setNotifications([]); // Clear notifications on error
         }
     };
 
     const handleMarkAsRead = async (id) => {
         try {
-            await api.put(`/notifications/${id}/read`);
-            fetchNotifications();
+            setError(null);
+            const response = await api.put(`/notifications/${id}/read`);
+            if (response.data.success) {
+                // Update local state to remove the read notification
+                setNotifications(prevNotifications => 
+                    prevNotifications.filter(notification => notification._id !== id)
+                );
+                setShowDropdown(false);
+            } else {
+                throw new Error(response.data.message || 'Failed to mark notification as read');
+            }
         } catch (error) {
             console.error('Error marking notification as read:', error);
+            setError('Failed to mark notification as read');
         }
     };
 
     const getNotificationIcon = (type) => {
         switch (type) {
             case 'error':
-                return 'text-danger';
+                return styles.notificationError;
             case 'warning':
-                return 'text-warning';
+                return styles.notificationWarning;
             case 'success':
-                return 'text-success';
+                return styles.notificationSuccess;
             default:
-                return 'text-info';
+                return styles.notificationInfo;
         }
     };
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showDropdown && !event.target.closest(`.${styles.notifications}`)) {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [showDropdown]);
+
     return (
-        <div className="nav-item dropdown">
+        <div className={styles.notifications}>
             <button
-                className="btn btn-link nav-link position-relative"
+                className={styles.notificationButton}
                 onClick={() => setShowDropdown(!showDropdown)}
+                title="Notifications"
             >
-                <FaBell />
+                <FaBell className={styles.icon} />
                 {notifications.length > 0 && (
-                    <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger animate__animated animate__bounceIn">
+                    <span className={styles.badge}>
                         {notifications.length}
                     </span>
                 )}
             </button>
 
             {showDropdown && (
-                <div className="dropdown-menu dropdown-menu-end show animate__animated animate__fadeIn">
-                    <div className="dropdown-header">
-                        <h6 className="mb-0">Notifications</h6>
+                <div className={styles.notificationDropdown}>
+                    <div className={styles.notificationHeader}>
+                        <h6 className={styles.notificationTitle}>Notifications</h6>
                     </div>
-                    <div className="dropdown-divider"></div>
-                    {notifications.length === 0 ? (
-                        <div className="dropdown-item text-muted">
+                    <div className={styles.notificationDivider} />
+                    {error ? (
+                        <div className={styles.notificationError}>
+                            <FaExclamationTriangle className={styles.errorIcon} />
+                            {error}
+                        </div>
+                    ) : notifications.length === 0 ? (
+                        <div className={styles.notificationEmpty}>
                             No new notifications
                         </div>
                     ) : (
@@ -78,23 +114,23 @@ const NotificationBell = () => {
                             {notifications.map((notification) => (
                                 <button
                                     key={notification._id}
-                                    className="dropdown-item text-wrap"
+                                    className={`${styles.notificationItem} ${getNotificationIcon(notification.type)}`}
                                     onClick={() => handleMarkAsRead(notification._id)}
                                 >
-                                    <div className={getNotificationIcon(notification.type)}>
-                                        <small className="fw-bold">{notification.title}</small>
+                                    <div>
+                                        <small className={styles.notificationItemTitle}>{notification.title}</small>
                                     </div>
-                                    <small className="text-muted d-block">
+                                    <small className={styles.notificationItemMessage}>
                                         {notification.message}
                                     </small>
-                                    <small className="text-muted">
+                                    <small className={styles.notificationItemTime}>
                                         {new Date(notification.createdAt).toLocaleString()}
                                     </small>
                                 </button>
                             ))}
-                            <div className="dropdown-divider"></div>
-                            <div className="dropdown-item text-center">
-                                <small className="text-muted">
+                            <div className={styles.notificationDivider} />
+                            <div className={styles.notificationFooter}>
+                                <small>
                                     Click on a notification to mark it as read
                                 </small>
                             </div>

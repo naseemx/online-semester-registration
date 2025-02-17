@@ -119,7 +119,12 @@ router.get('/dashboard/stats', async (req, res) => {
 
         // Format registration statistics
         const completedRegistrations = registrationStats.find(stat => stat._id === 'completed')?.count || 0;
-        const pendingRegistrations = registrationStats.find(stat => stat._id === 'in progress')?.count || 0;
+        const pendingRegistrations = registrationStats.reduce((total, stat) => {
+            if (stat._id === 'in progress' || stat._id === 'not started') {
+                return total + stat.count;
+            }
+            return total;
+        }, 0);
 
         // Get fine statistics
         const fineStats = await Fine.aggregate([
@@ -344,7 +349,28 @@ router.post('/users', async (req, res) => {
 // Student management routes
 router.get('/students', async (req, res) => {
     try {
-        const students = await Student.find();
+        // Find students whose profiles are not associated with admin users
+        const students = await Student.aggregate([
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: 'studentProfile',
+                    as: 'user'
+                }
+            },
+            {
+                $match: {
+                    'user.role': { $ne: 'admin' }
+                }
+            },
+            {
+                $project: {
+                    user: 0 // Exclude the user data from the final result
+                }
+            }
+        ]);
+
         res.json({
             success: true,
             data: students

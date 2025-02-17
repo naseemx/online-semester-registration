@@ -3,8 +3,8 @@
     /* Light Theme Colors */
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fd;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4b5563;
     --border-color: #e5e7eb;
     --accent-color: #2563eb;
     --accent-hover: #1d4ed8;
@@ -18,6 +18,21 @@
     --error-bg: #fee2e2;
     --error-border: #dc2626;
     --error-text: #991b1b;
+    --success-color: #059669;
+    --warning-color: #d97706;
+    --info-color: #0891b2;
+    --hover-bg: #f3f4f6;
+    --active-bg: #e5edff;
+    --disabled-bg: #f3f4f6;
+    --disabled-text: #9ca3af;
+    --link-color: #2563eb;
+    --link-hover: #1d4ed8;
+    --nav-text: #1a1a1a;
+    --nav-hover: #2563eb;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
 }
 
 /* Dark Theme Colors */
@@ -25,19 +40,30 @@
     --bg-primary: #1a1a1a;
     --bg-secondary: #141414;
     --text-primary: #ffffff;
-    --text-secondary: #9ca3af;
-    --border-color: #2e2e2e;
+    --text-secondary: #d1d5db;
+    --border-color: #404040;
     --accent-color: #60a5fa;
     --accent-hover: #3b82f6;
     --accent-bg: #1e293b;
     --shadow-color: rgba(0, 0, 0, 0.3);
-    --card-bg: #1e1e1e;
-    --input-bg: #2d2d2d;
-    --table-header-bg: #1e1e1e;
-    --table-row-hover: #2d2d2d;
+    --card-bg: #262626;
+    --input-bg: #262626;
+    --table-header-bg: #262626;
+    --table-row-hover: #333333;
     --error-bg: #7f1d1d;
     --error-border: #b91c1c;
     --error-text: #fecaca;
+    --success-color: #34d399;
+    --warning-color: #fbbf24;
+    --info-color: #22d3ee;
+    --hover-bg: #333333;
+    --active-bg: #1e293b;
+    --disabled-bg: #404040;
+    --disabled-text: #9ca3af;
+    --link-color: #60a5fa;
+    --link-hover: #93c5fd;
+    --nav-text: #ffffff;
+    --nav-hover: #60a5fa;
 }
 
 /* Global Styles */
@@ -52,6 +78,15 @@ body {
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     line-height: 1.5;
+}
+
+/* Navigation Styles */
+.nav-link {
+    color: var(--nav-text);
+}
+
+.nav-link:hover {
+    color: var(--nav-hover);
 }
 
 /* Form Elements */
@@ -73,16 +108,27 @@ textarea:focus {
     box-shadow: 0 0 0 2px var(--accent-bg);
 }
 
+input:disabled,
+select:disabled,
+textarea:disabled {
+    background-color: var(--disabled-bg);
+    color: var(--disabled-text);
+    cursor: not-allowed;
+}
+
 /* Table Styles */
 table {
     width: 100%;
     border-collapse: collapse;
+    color: var(--text-primary);
 }
 
 th {
     background-color: var(--table-header-bg);
     color: var(--text-primary);
     font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
 }
 
 tr:hover {
@@ -141,13 +187,18 @@ button {
     padding: 0;
     cursor: pointer;
     font: inherit;
-    color: inherit;
+    color: var(--text-primary);
 }
 
 /* Link Reset */
 a {
-    color: inherit;
+    color: var(--link-color);
     text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--link-hover);
 }
 
 /* Card Styles */
@@ -156,6 +207,31 @@ a {
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px var(--shadow-color);
+    color: var(--text-primary);
+}
+
+/* Button Styles */
+button:disabled {
+    background-color: var(--disabled-bg);
+    color: var(--disabled-text);
+    cursor: not-allowed;
+}
+
+/* Status Colors */
+.success {
+    color: var(--success-color);
+}
+
+.warning {
+    color: var(--warning-color);
+}
+
+.error {
+    color: var(--danger-color);
+}
+
+.info {
+    color: var(--info-color);
 }
 
 /* Responsive Font Sizes */
@@ -170,6 +246,36 @@ html {
 }
 
 /* Dark mode specific overrides */
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+    color: var(--text-secondary);
+}
+
+.dark-mode .card {
+    box-shadow: 0 1px 3px var(--shadow-color);
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+.dark-mode table {
+    border-color: var(--border-color);
+}
+
+.dark-mode th {
+    background-color: var(--table-header-bg);
+    border-bottom-color: var(--border-color);
+}
+
+.dark-mode tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.dark-mode .error-message {
+    background-color: var(--error-bg);
+    border-color: var(--error-border);
+    color: var(--error-text);
+}
+
 .dark-mode input,
 .dark-mode select,
 .dark-mode textarea {
@@ -178,25 +284,158 @@ html {
     color: var(--text-primary);
 }
 
-.dark-mode table {
+.dark-mode .nav-link {
+    color: var(--nav-text);
+}
+
+.dark-mode .nav-link:hover {
+    color: var(--nav-hover);
+}
+
+/* Dark mode overrides */
+.dark-mode .card {
+    background-color: var(--bg-primary);
+    border-color: var(--border-color);
+}
+
+.dark-mode .card-header {
+    background-color: var(--accent-color);
+    border-bottom-color: var(--border-color);
+}
+
+.dark-mode .card-body {
     color: var(--text-primary);
 }
 
-.dark-mode th {
-    background-color: var(--table-header-bg);
+.dark-mode .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.dark-mode h5,
+.dark-mode h6,
+.dark-mode p,
+.dark-mode strong {
     color: var(--text-primary);
 }
 
-.dark-mode td {
+.dark-mode .alert-warning {
+    background-color: #78350f;
+    border-color: #92400e;
+    color: #fcd34d;
+}
+
+.dark-mode .alert-success {
+    background-color: #064e3b;
+    border-color: #065f46;
+    color: #6ee7b7;
+}
+
+.dark-mode .alert-danger {
+    background-color: #7f1d1d;
+    border-color: #991b1b;
+    color: #fca5a5;
+}
+
+.dark-mode .btn-primary {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.dark-mode .btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.dark-mode .btn-primary:disabled {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.dark-mode .badge.bg-secondary {
+    background-color: var(--bg-secondary) !important;
     color: var(--text-primary);
 }
 
-.dark-mode tr:hover {
-    background-color: var(--table-row-hover);
+.dark-mode .badge.bg-success {
+    background-color: #065f46 !important;
+    color: #6ee7b7;
 }
 
-.dark-mode .error-message {
-    background-color: var(--error-bg);
-    border-color: var(--error-border);
-    color: var(--error-text);
+.dark-mode .badge.bg-warning {
+    background-color: #92400e !important;
+    color: #fcd34d;
+}
+
+.dark-mode .text-success {
+    color: #6ee7b7 !important;
+}
+
+.dark-mode .text-danger {
+    color: #fca5a5 !important;
+}
+
+/* Responsive breakpoints */
+:root {
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+}
+
+/* Base responsive styles */
+html {
+    font-size: 16px;
+}
+
+/* Mobile first approach */
+@media (max-width: 576px) {
+    html {
+        font-size: 14px;
+    }
+
+    .container {
+        padding: 0.75rem;
+    }
+
+    .card {
+        margin: 0.5rem 0;
+    }
+
+    input, select, textarea, button {
+        font-size: 1rem;
+        padding: 0.5rem;
+    }
+}
+
+/* Tablet */
+@media (min-width: 577px) and (max-width: 991px) {
+    html {
+        font-size: 15px;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+}
+
+/* Ensure tables are responsive */
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive images */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive form elements */
+input,
+select,
+textarea {
+    max-width: 100%;
 } 

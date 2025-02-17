@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaBell, FaMoon, FaSun } from 'react-icons/fa';
+import { FaUserCircle, FaMoon, FaSun } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import NotificationBell from './NotificationBell';
 import styles from './Header.module.css';
 
 const Header = () => {
@@ -30,10 +31,7 @@ const Header = () => {
                 >
                     {darkMode ? <FaSun className={styles.icon} /> : <FaMoon className={styles.icon} />}
                 </button>
-                <div className={styles.notifications}>
-                    <FaBell className={styles.icon} />
-                    <span className={styles.badge}>0</span>
-                </div>
+                <NotificationBell />
                 <div className={styles.profile}>
                     <button 
                         className={styles.profileButton}

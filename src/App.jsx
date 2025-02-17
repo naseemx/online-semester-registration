@@ -19,6 +19,7 @@ import Profile from './pages/Profile';
 import AdminLayout from './layouts/AdminLayout';
 import StaffLayout from './layouts/StaffLayout';
 import TutorLayout from './layouts/TutorLayout';
+import StudentLayout from './layouts/StudentLayout';
 
 // Import Bootstrap and custom CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -65,18 +66,16 @@ function App() {
 
                                 {/* Student routes */}
                                 <Route
-                                    path="/student/registration"
+                                    path="/student/*"
                                     element={
                                         <PrivateRoute roles={['student']}>
-                                            <Registration />
-                                        </PrivateRoute>
-                                    }
-                                />
-                                <Route
-                                    path="/student/status"
-                                    element={
-                                        <PrivateRoute roles={['student']}>
-                                            <Status />
+                                            <StudentLayout>
+                                                <Routes>
+                                                    <Route path="registration" element={<Registration />} />
+                                                    <Route path="status" element={<Status />} />
+                                                    <Route path="" element={<Navigate to="registration" replace />} />
+                                                </Routes>
+                                            </StudentLayout>
                                         </PrivateRoute>
                                     }
                                 />

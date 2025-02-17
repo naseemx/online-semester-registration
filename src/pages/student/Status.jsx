@@ -1,141 +1,187 @@
-import { useEffect } from 'react';
-import usePolling from '../../hooks/usePolling';
-import { FaGraduationCap, FaMoneyBill, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import 'animate.css';
+import React, { useState, useEffect } from 'react';
+import { FaClipboardCheck, FaSpinner, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { studentAPI } from '../../utils/api';
+import styles from './Status.module.css';
 
 const Status = () => {
-    const { data: statusData, error: statusError } = usePolling(
-        'http://localhost:5000/api/student/status'
-    );
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [status, setStatus] = useState({
+        registrationStatus: '',
+        verificationStatus: {
+            library: 'pending',
+            lab: 'pending',
+            office: 'pending'
+        },
+        fines: {
+            tuition: { amount: 0, status: 'paid' },
+            transportation: { amount: 0, status: 'paid' },
+            hostelFees: { amount: 0, status: 'paid' },
+            labFines: { amount: 0, status: 'paid' },
+            libraryFines: { amount: 0, status: 'paid' }
+        }
+    });
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+    useEffect(() => {
+        fetchStatus();
+    }, []);
+
+    const fetchStatus = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await studentAPI.getStatus();
+            if (response.data.success) {
+                const data = response.data.data;
+                setStatus({
+                    ...data,
+                    registrationStatus: data.registrationStatus || data.student?.registrationStatus || 'Not Started'
+                });
+            } else {
+                throw new Error(response.data.message || 'Failed to fetch status');
+            }
+        } catch (err) {
+            setError('Failed to fetch status. Please try again.');
+            console.error('Error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    if (statusError) {
+    const getStatusClass = (status) => {
+        if (!status) return 'notstarted';
+        const statusMap = {
+            'completed': 'completed',
+            'in progress': 'inprogress',
+            'not started': 'notstarted',
+            'rejected': 'rejected'
+        };
+        return statusMap[status.toLowerCase()] || 'notstarted';
+    };
+
+    const getStatusDisplay = (status) => {
+        if (!status) return 'Not Started';
+        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    };
+
+    if (loading) {
         return (
-            <div className="alert alert-danger m-3">
-                Error loading student status
+            <div className={styles.loadingContainer}>
+                <FaSpinner className={styles.spinner} />
+                <p>Loading status...</p>
             </div>
         );
     }
 
     return (
-        <div className="container py-4">
-            <div className="row">
-                <div className="col-lg-8 mx-auto">
-                    <div className="card shadow animate__animated animate__fadeIn">
-                        <div className="card-header bg-primary text-white">
-                            <h4 className="mb-0">
-                                <FaGraduationCap className="me-2" />
-                                Registration Status
-                            </h4>
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <h2>
+                    <FaClipboardCheck className={styles.headerIcon} />
+                    Registration Status
+                </h2>
+            </div>
+
+            {error && (
+                <div className={styles.errorMessage}>
+                    {error}
+                </div>
+            )}
+
+            <div className={styles.statusGrid}>
+                {/* Registration Status Card */}
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h3>Registration Status</h3>
+                    </div>
+                    <div className={styles.cardBody}>
+                        <div className={`${styles.statusBadge} ${styles[getStatusClass(status.registrationStatus)]}`}>
+                            {getStatusDisplay(status.registrationStatus)}
                         </div>
-                        <div className="card-body">
-                            {/* Student Information */}
-                            <div className="mb-4">
-                                <h5 className="card-title">Student Information</h5>
-                                <div className="list-group">
-                                    <div className="list-group-item">
-                                        <strong>Name:</strong> {statusData?.data?.student?.name}
-                                    </div>
-                                    <div className="list-group-item">
-                                        <strong>Admission Number:</strong> {statusData?.data?.student?.admissionNumber}
-                                    </div>
-                                    <div className="list-group-item">
-                                        <strong>Semester:</strong> {statusData?.data?.student?.semester}
-                                    </div>
-                                    <div className="list-group-item">
-                                        <strong>Department:</strong> {statusData?.data?.student?.department}
-                                    </div>
-                                    <div className="list-group-item">
-                                        <strong>Registration Status:</strong>{' '}
-                                        <span className={`badge ${
-                                            statusData?.data?.student?.registrationStatus === 'completed'
-                                                ? 'bg-success'
-                                                : statusData?.data?.student?.registrationStatus === 'in progress'
-                                                ? 'bg-warning'
-                                                : 'bg-secondary'
-                                        }`}>
-                                            {statusData?.data?.student?.registrationStatus}
+                    </div>
+                </div>
+
+                {/* Verification Status Card */}
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h3>Verification Status</h3>
+                    </div>
+                    <div className={styles.cardBody}>
+                        <div className={styles.verificationList}>
+                            <div className={styles.verificationItem}>
+                                <span>Library</span>
+                                <div className={styles.statusWithIcon}>
+                                    {status.verificationStatus?.library === 'clear' ? (
+                                        <>
+                                            <FaCheckCircle className={styles.statusIconSuccess} />
+                                            <span className={styles.statusText}>Cleared</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaTimesCircle className={styles.statusIconPending} />
+                                            <span className={styles.statusText}>Pending</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            <div className={styles.verificationItem}>
+                                <span>Lab</span>
+                                <div className={styles.statusWithIcon}>
+                                    {status.verificationStatus?.lab === 'clear' ? (
+                                        <>
+                                            <FaCheckCircle className={styles.statusIconSuccess} />
+                                            <span className={styles.statusText}>Cleared</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaTimesCircle className={styles.statusIconPending} />
+                                            <span className={styles.statusText}>Pending</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            <div className={styles.verificationItem}>
+                                <span>Office</span>
+                                <div className={styles.statusWithIcon}>
+                                    {status.verificationStatus?.office === 'clear' ? (
+                                        <>
+                                            <FaCheckCircle className={styles.statusIconSuccess} />
+                                            <span className={styles.statusText}>Cleared</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaTimesCircle className={styles.statusIconPending} />
+                                            <span className={styles.statusText}>Pending</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Fines Status Card */}
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h3>Fines Status</h3>
+                    </div>
+                    <div className={styles.cardBody}>
+                        <div className={styles.finesList}>
+                            {Object.entries(status.fines || {}).map(([type, fine]) => (
+                                <div key={type} className={styles.fineItem}>
+                                    <span className={styles.fineType}>
+                                        {type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                                    </span>
+                                    <div className={styles.fineDetails}>
+                                        <span className={styles.fineAmount}>
+                                            ₹{fine?.amount?.toFixed(2) || '0.00'}
+                                        </span>
+                                        <span className={`${styles.fineStatus} ${styles[fine?.status || 'paid']}`}>
+                                            {fine?.status ? (fine.status.charAt(0).toUpperCase() + fine.status.slice(1)) : 'Paid'}
                                         </span>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Verification Status */}
-                            <div className="mb-4">
-                                <h5 className="card-title">Verification Status</h5>
-                                <div className="list-group">
-                                    <div className="list-group-item d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Library Status</strong>
-                                            <p className="mb-0 text-muted">
-                                                {statusData?.data?.verificationStatus?.library}
-                                            </p>
-                                        </div>
-                                        {statusData?.data?.verificationStatus?.library === 'clear' ? (
-                                            <FaCheckCircle className="text-success" />
-                                        ) : (
-                                            <FaTimesCircle className="text-danger" />
-                                        )}
-                                    </div>
-                                    <div className="list-group-item d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Lab Status</strong>
-                                            <p className="mb-0 text-muted">
-                                                {statusData?.data?.verificationStatus?.lab}
-                                            </p>
-                                        </div>
-                                        {statusData?.data?.verificationStatus?.lab === 'clear' ? (
-                                            <FaCheckCircle className="text-success" />
-                                        ) : (
-                                            <FaTimesCircle className="text-danger" />
-                                        )}
-                                    </div>
-                                    <div className="list-group-item d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Office Status</strong>
-                                            <p className="mb-0 text-muted">
-                                                {statusData?.data?.verificationStatus?.office}
-                                            </p>
-                                        </div>
-                                        {statusData?.data?.verificationStatus?.office === 'clear' ? (
-                                            <FaCheckCircle className="text-success" />
-                                        ) : (
-                                            <FaTimesCircle className="text-danger" />
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Fines */}
-                            {statusData?.data?.fines && (
-                                <div>
-                                    <h5 className="card-title">
-                                        <FaMoneyBill className="me-2" />
-                                        Pending Fines
-                                    </h5>
-                                    <div className="list-group">
-                                        {Object.entries(statusData.data.fines).map(([key, value]) => (
-                                            <div key={key} className="list-group-item d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong>
-                                                    <p className="mb-0 text-muted">
-                                                        Status: {value.status}
-                                                    </p>
-                                                </div>
-                                                <span className={`badge ${value.status === 'paid' ? 'bg-success' : 'bg-danger'}`}>
-                                                    {formatCurrency(value.amount)}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                            ))}
                         </div>
                     </div>
                 </div>

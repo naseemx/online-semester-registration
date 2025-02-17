@@ -113,24 +113,24 @@ const Users = () => {
         <div className={styles['users-container']}>
             <div className={styles['page-header']}>
                 <h1>Users Management</h1>
-                <button 
+                                    <button
                     className={styles['add-user-btn']}
-                    onClick={() => {
+                                        onClick={() => {
                         setSelectedUser(null);
                         setShowModal(true);
                         setError(null);
                     }}
                 >
                     <FaUserPlus />
-                    Add User
-                </button>
-            </div>
+                                        Add User
+                                    </button>
+                                </div>
 
-            {error && (
+                            {error && (
                 <div className={styles['error-message']}>
-                    {error}
-                </div>
-            )}
+                                    {error}
+                                </div>
+                            )}
 
             <div className={styles['filters-section']}>
                 <div className={styles['search-box']}>
@@ -178,27 +178,27 @@ const Users = () => {
                                 <h3>{user.username}</h3>
                                 <p className={styles['user-email']}>{user.email}</p>
                                 <span className={`${styles['role-badge']} ${styles[user.role]}`}>
-                                    {user.role}
-                                </span>
+                                                        {user.role}
+                                                    </span>
                             </div>
                             <div className={styles['user-actions']}>
-                                <button
+                                                        <button
                                     className={styles['edit-btn']}
                                     onClick={() => {
                                         setSelectedUser(user);
                                         setShowModal(true);
                                     }}
                                     title="Edit user"
-                                >
-                                    <FaEdit />
-                                </button>
-                                <button
+                                                        >
+                                                            <FaEdit />
+                                                        </button>
+                                                        <button
                                     className={styles['delete-btn']}
                                     onClick={() => handleDeleteUser(user.id)}
                                     title="Delete user"
                                 >
-                                    <FaTrash />
-                                </button>
+                                                                <FaTrash />
+                                                        </button>
                             </div>
                         </div>
                     ))
@@ -281,46 +281,45 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
             {formError && (
                 <div className={styles['form-error']}>
                     {formError}
-                </div>
+                            </div>
             )}
             <div className={styles['form-group']}>
                 <label htmlFor="username">Username</label>
-                <input
-                    type="text"
+                                        <input
+                                            type="text"
                     id="username"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    required
+                                            required
                     disabled={submitting}
-                />
-            </div>
+                                        />
+                                    </div>
             <div className={styles['form-group']}>
                 <label htmlFor="email">Email</label>
-                <input
-                    type="email"
+                                        <input
+                                            type="email"
                     id="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
+                                            required
                     disabled={submitting}
-                />
-            </div>
+                                        />
+                                    </div>
             <div className={styles['form-group']}>
                 <label className={styles.formLabel}>Role</label>
-                <select
+                                        <select
                     className={styles.formSelect}
-                    name="role"
+                                            name="role"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    required
-                >
+                                            required
+                                        >
                     <option value="">Select Role</option>
                     <option value="admin">Admin</option>
                     <option value="tutor">Tutor</option>
                     <option value="staff">Staff</option>
-                    <option value="student">Student</option>
-                </select>
-            </div>
+                                        </select>
+                                    </div>
             {!user && (
                 <div className={styles['form-group']}>
                     <label htmlFor="password">Password</label>
@@ -337,14 +336,14 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
                 </div>
             )}
             <div className={styles['form-actions']}>
-                <button 
-                    type="button" 
+                                        <button
+                                            type="button"
                     onClick={onCancel} 
                     className={styles['cancel-btn']}
                     disabled={submitting}
-                >
-                    Cancel
-                </button>
+                                        >
+                                            Cancel
+                                        </button>
                 <button 
                     type="submit" 
                     className={styles['submit-btn']}

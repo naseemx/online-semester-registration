@@ -15,9 +15,24 @@ const getNotifications = async (req, res) => {
 
         // Filter notifications based on user role
         if (req.user.role !== 'admin') {
+            const roleMap = {
+                'student': 'students',
+                'staff': 'staff',
+                'tutor': 'tutors',
+                'admin': 'admins'
+            };
+
+            const userRole = roleMap[req.user.role];
+            if (!userRole) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user role'
+                });
+            }
+
             query.$or = [
                 { recipients: 'all' },
-                { recipients: req.user.role + 's' } // Add 's' to match the enum values (students, staff, tutors)
+                { recipients: userRole }
             ];
         }
 
@@ -43,12 +58,21 @@ const sendNotification = async (req, res) => {
     try {
         const { title, message, type, recipients } = req.body;
 
+        // Validate recipients
+        const validRecipients = ['all', 'students', 'staff', 'tutors', 'admins'];
+        if (!validRecipients.includes(recipients)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid recipients value'
+            });
+        }
+
         const notification = new Notification({
             title,
             message,
             type,
             recipients,
-            createdBy: req.session.user.id
+            createdBy: req.user.id // Changed from req.session.user.id to req.user.id
         });
 
         await notification.save();
@@ -75,6 +99,24 @@ const markAsRead = async (req, res) => {
                 success: false,
                 message: 'Notification not found'
             });
+        }
+
+        // Check if the user has permission to read this notification
+        if (req.user.role !== 'admin') {
+            const roleMap = {
+                'student': 'students',
+                'staff': 'staff',
+                'tutor': 'tutors',
+                'admin': 'admins'
+            };
+
+            const userRole = roleMap[req.user.role];
+            if (notification.recipients !== 'all' && notification.recipients !== userRole) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Not authorized to access this notification'
+                });
+            }
         }
 
         notification.read = true;
