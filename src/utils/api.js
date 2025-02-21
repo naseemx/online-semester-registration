@@ -77,20 +77,27 @@ export const staffAPI = {
 // Tutor API calls
 export const tutorAPI = {
     getRegistrations: (status) => api.get('/tutor/registrations', { params: { status } }),
+    getRegistrationStudents: (registrationId) => api.get(`/tutor/registrations/${registrationId}/students`),
     sendStatusEmail: (studentId) => api.post(`/tutor/registrations/${studentId}/send-status`),
+    getTutorAssignments: () => api.get('/tutor/assignments/me'),
+    getSemesterRegistrations: () => api.get('/tutor/semester-registrations'),
+    createSemesterRegistration: (data) => api.post('/tutor/semester-registrations', data),
+    updateSemesterRegistration: (id, data) => api.put(`/tutor/semester-registrations/${id}`, data),
+    deleteSemesterRegistration: (id) => api.delete(`/tutor/semester-registrations/${id}`),
+    getSemesterRegistrationStats: (id) => api.get(`/tutor/semester-registrations/${id}/statistics`),
+    sendSemesterReminders: (id) => api.post(`/tutor/semester-registrations/${id}/reminders`),
     generateReport: (type) => api.get(`/tutor/reports/${type}`, { 
         responseType: 'arraybuffer',
         headers: {
             'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         }
-    }),
-    sendSemesterEmail: (data) => api.post('/tutor/semester-email', data)
+    })
 };
 
 // Admin API calls
 export const adminAPI = {
     getDashboardStats: () => api.get('/admin/dashboard/stats'),
-    getUsers: () => api.get('/admin/users'),
+    getUsers: (params = {}) => api.get('/admin/users', { params }),
     createUser: (userData) => api.post('/admin/users', userData),
     updateUser: (userId, userData) => api.put(`/admin/users/${userId}`, userData),
     deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
@@ -98,6 +105,13 @@ export const adminAPI = {
     createStudent: (studentData) => api.post('/admin/students', studentData),
     updateStudent: (studentId, studentData) => api.put(`/admin/students/${studentId}`, studentData),
     deleteStudent: (studentId) => api.delete(`/admin/students/${studentId}`),
+    
+    // Tutor Assignment endpoints
+    getTutorAssignments: () => api.get('/admin/tutor-assignments'),
+    createTutorAssignment: (data) => api.post('/admin/tutor-assignments', data),
+    updateTutorAssignment: (id, data) => api.put(`/admin/tutor-assignments/${id}`, data),
+    deleteTutorAssignment: (id) => api.delete(`/admin/tutor-assignments/${id}`),
+    getTutorAssignmentStudents: (id) => api.get(`/admin/tutor-assignments/${id}/students`),
     
     // Settings endpoints
     getSettings: () => api.get('/admin/settings'),

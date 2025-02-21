@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaChartBar, FaUsers, FaUserGraduate, FaCog, FaHistory, FaBell } from 'react-icons/fa';
+import { FaChartBar, FaUsers, FaUserGraduate, FaCog, FaHistory, FaBell, FaUserFriends } from 'react-icons/fa';
 import Header from '../components/Header';
 import styles from './AdminLayout.module.css';
 
@@ -23,6 +23,10 @@ const AdminLayout = ({ children }) => {
                     <Link to="/admin/students" className={styles.navItem}>
                         <FaUserGraduate />
                         <span>Students</span>
+                    </Link>
+                    <Link to="/admin/tutor-assignments" className={styles.navItem}>
+                        <FaUserFriends />
+                        <span>Tutor Assignments</span>
                     </Link>
                     <Link to="/admin/settings" className={styles.navItem}>
                         <FaCog />

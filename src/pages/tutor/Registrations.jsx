@@ -1,38 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { FaFilter, FaSearch, FaEnvelope, FaSpinner, FaCheckCircle, FaTimesCircle, FaExclamationCircle } from 'react-icons/fa';
 import { tutorAPI } from '../../utils/api';
+import { toast } from 'react-hot-toast';
 import styles from './Registrations.module.css';
 
 const Registrations = () => {
     const [registrations, setRegistrations] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All Statuses');
     const [selectedDepartment, setSelectedDepartment] = useState('All');
     const [sendingEmail, setSendingEmail] = useState(null);
+    const [selectedRegistration, setSelectedRegistration] = useState(null);
 
     const departments = ['All', 'Computer Science', 'Electrical', 'Mechanical', 'Civil'];
     const statuses = ['All Statuses', 'Not Started', 'In Progress', 'Completed', 'Rejected'];
 
     useEffect(() => {
         fetchRegistrations();
-    }, [statusFilter]);
+    }, []);
 
     const fetchRegistrations = async () => {
         try {
             setLoading(true);
-            setError(null);
-            const response = await tutorAPI.getRegistrations(statusFilter !== 'All Statuses' ? statusFilter.toLowerCase() : null);
+            const response = await tutorAPI.getRegistrations();
             if (response.data.success) {
-                console.log('Registrations data:', response.data.data);
-            setRegistrations(response.data.data);
+                const registrationsWithStudents = await Promise.all(
+                    response.data.data.map(async (reg) => {
+                        const studentsResponse = await tutorAPI.getRegistrationStudents(reg._id);
+                        return {
+                            ...reg,
+                            students: studentsResponse.data.success ? studentsResponse.data.data : []
+                        };
+                    })
+                );
+                setRegistrations(registrationsWithStudents);
             } else {
-                throw new Error(response.data.message || 'Failed to fetch registrations');
+                toast.error(response.data.message || 'Failed to fetch registrations');
             }
-        } catch (err) {
-            console.error('Error fetching registrations:', err);
-            setError('Failed to load registrations. Please try again.');
+        } catch (error) {
+            console.error('Fetch registrations error:', error);
+            toast.error(error.response?.data?.message || 'Error fetching registrations');
         } finally {
             setLoading(false);
         }
@@ -42,16 +51,20 @@ const Registrations = () => {
         try {
             setSendingEmail(studentId);
             const response = await tutorAPI.sendStatusEmail(studentId);
-            if (response.data.success) {
-                // You could add a toast notification here
-                console.log('Email sent successfully to:', email);
+            if (!response.data.success) {
+                throw new Error('Failed to send email');
             }
+            toast.success('Status email sent successfully');
         } catch (err) {
-            console.error('Error sending email:', err);
-            // You could add an error toast notification here
+            console.error('Error sending email:', err.formattedMessage || err.message);
+            toast.error(err.formattedMessage || 'Failed to send email');
         } finally {
             setSendingEmail(null);
         }
+    };
+
+    const handleViewStudents = (registration) => {
+        setSelectedRegistration(registration);
     };
 
     const filteredRegistrations = registrations.filter(reg => {
@@ -60,8 +73,11 @@ const Registrations = () => {
             (reg.email || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All Statuses' || reg.registrationStatus === statusFilter;
         const matchesDepartment = selectedDepartment === 'All' || reg.department === selectedDepartment;
+        
         return matchesSearch && matchesStatus && matchesDepartment;
     });
+    
+    console.log('Filtered registrations count:', filteredRegistrations.length);
 
     if (loading && !registrations.length) {
         return (
@@ -210,6 +226,44 @@ const Registrations = () => {
                             </tbody>
                         </table>
                     </div>
+
+            <div className={styles.registrationsList}>
+                {registrations.map((registration) => (
+                    <div key={registration._id} className={styles.registrationCard}>
+                        <div className={styles.registrationHeader}>
+                            <h3>{registration.department} - Semester {registration.semester}</h3>
+                            <span className={styles.status}>{registration.status}</span>
+                        </div>
+                        <div className={styles.registrationDetails}>
+                            <p>Created: {new Date(registration.createdAt).toLocaleDateString()}</p>
+                            <p>Deadline: {new Date(registration.deadline).toLocaleDateString()}</p>
+                            <p>Students Registered: {registration.students?.length || 0}</p>
+                        </div>
+                        <button
+                            className={styles.viewButton}
+                            onClick={() => handleViewStudents(registration)}
+                        >
+                            View Students
+                        </button>
+                        {selectedRegistration?._id === registration._id && (
+                            <div className={styles.studentsList}>
+                                <h4>Registered Students</h4>
+                                {registration.students?.length > 0 ? (
+                                    <ul>
+                                        {registration.students.map((student) => (
+                                            <li key={student._id}>
+                                                {student.name} ({student.rollNumber})
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p>No students registered yet</p>
+                                )}
+                            </div>
+                        )}
+                </div>
+                ))}
+            </div>
         </div>
     );
 };

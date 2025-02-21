@@ -1,5 +1,6 @@
 const Student = require('../models/Student');
 const Fine = require('../models/Fine');
+const SemesterRegistration = require('../models/SemesterRegistration');
 const { sendRegistrationCompletionEmail } = require('../utils/emailService');
 
 // Get student status
@@ -19,6 +20,25 @@ const getStatus = async (req, res) => {
                 message: 'Student profile not found'
             });
         }
+
+        // Get active semester registrations for student's department and semester
+        const activeRegistrations = await SemesterRegistration.find({
+            department: student.department,
+            semester: student.semester,
+            status: 'active',
+            'students.student': student._id
+        });
+
+        console.log('Found active registrations:', {
+            studentDept: student.department,
+            studentSem: student.semester,
+            registrations: activeRegistrations.map(reg => ({
+                id: reg._id,
+                department: reg.department,
+                semester: reg.semester,
+                deadline: reg.deadline
+            }))
+        });
 
         const fines = await Fine.findOne({ student: student._id });
 
@@ -43,7 +63,14 @@ const getStatus = async (req, res) => {
                     hostelFees: fines.hostelFees,
                     labFines: fines.labFines,
                     libraryFines: fines.libraryFines
-                } : null
+                } : null,
+                activeRegistrations: activeRegistrations.map(reg => ({
+                    id: reg._id,
+                    department: reg.department,
+                    semester: reg.semester,
+                    deadline: reg.deadline,
+                    status: reg.status
+                }))
             }
         });
     } catch (error) {
@@ -74,6 +101,21 @@ const applyRegistration = async (req, res) => {
             });
         }
 
+        // Find active semester registration for this student
+        const semesterRegistration = await SemesterRegistration.findOne({
+            department: student.department,
+            semester: student.semester,
+            status: 'active',
+            'students.student': student._id
+        });
+
+        if (!semesterRegistration) {
+            return res.status(400).json({
+                success: false,
+                message: 'No active semester registration found'
+            });
+        }
+
         // Update registration status to in progress
         student.registrationStatus = 'in progress';
         await student.save();
@@ -88,9 +130,21 @@ const applyRegistration = async (req, res) => {
         const finesCleared = fines ? fines.isAllCleared : true;
 
         if (isEligible && finesCleared) {
+            // Update student status
             student.registrationStatus = 'completed';
             student.registrationCompletedAt = new Date();
             await student.save();
+
+            // Update semester registration status for this student
+            const studentIndex = semesterRegistration.students.findIndex(
+                s => s.student.toString() === student._id.toString()
+            );
+
+            if (studentIndex !== -1) {
+                semesterRegistration.students[studentIndex].status = 'submitted';
+                semesterRegistration.students[studentIndex].submittedAt = new Date();
+                await semesterRegistration.save();
+            }
 
             // Send email notification
             await sendRegistrationCompletionEmail(student);

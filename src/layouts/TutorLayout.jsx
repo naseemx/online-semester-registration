@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaGraduationCap, FaFileAlt, FaEnvelope } from 'react-icons/fa';
+import { FaGraduationCap, FaFileAlt, FaCalendarAlt } from 'react-icons/fa';
 import Header from '../components/Header';
 import styles from './TutorLayout.module.css';
 
@@ -16,13 +16,13 @@ const TutorLayout = ({ children }) => {
                         <FaGraduationCap />
                         <span>Registrations</span>
                     </Link>
+                    <Link to="/tutor/semester-registration" className={styles.navItem}>
+                        <FaCalendarAlt />
+                        <span>Semester Registration</span>
+                    </Link>
                     <Link to="/tutor/reports" className={styles.navItem}>
                         <FaFileAlt />
                         <span>Reports</span>
-                    </Link>
-                    <Link to="/tutor/semester-email" className={styles.navItem}>
-                        <FaEnvelope />
-                        <span>Semester Email</span>
                     </Link>
                 </nav>
             </aside>

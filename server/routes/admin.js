@@ -12,6 +12,13 @@ const {
     markAsRead, 
     deleteNotification 
 } = require('../controllers/notificationController');
+const {
+    getAllAssignments,
+    createAssignment,
+    updateAssignment,
+    deleteAssignment,
+    getAssignmentStudents
+} = require('../controllers/tutorAssignmentController');
 
 // Helper function to format currency in INR
 const formatCurrency = (amount) => {
@@ -177,7 +184,10 @@ router.get('/dashboard/stats', async (req, res) => {
 // User management routes
 router.get('/users', async (req, res) => {
     try {
-        const users = await User.find().select('-password');
+        const { role } = req.query;
+        const query = role ? { role } : {};
+        
+        const users = await User.find(query).select('-password');
         res.json({
             success: true,
             data: users
@@ -725,5 +735,12 @@ router.get('/logs/export', async (req, res) => {
         });
     }
 });
+
+// Tutor Assignment routes
+router.get('/tutor-assignments', getAllAssignments);
+router.post('/tutor-assignments', createAssignment);
+router.put('/tutor-assignments/:id', updateAssignment);
+router.delete('/tutor-assignments/:id', deleteAssignment);
+router.get('/tutor-assignments/:id/students', getAssignmentStudents);
 
 module.exports = router; 

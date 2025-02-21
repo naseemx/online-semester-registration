@@ -1,22 +1,48 @@
 const Student = require('../models/Student');
 const Fine = require('../models/Fine');
+const TutorAssignment = require('../models/TutorAssignment');
 const XLSX = require('xlsx');
 const { sendRegistrationCompletionEmail, sendEmail } = require('../utils/emailService');
 
 // Get all registrations
 const getRegistrations = async (req, res) => {
     try {
-        const { status } = req.query;
-        
-        // Build query based on status filter
-        let query = {};
-        if (status && status !== 'all') {
-            query.registrationStatus = status;
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
         }
 
-        const students = await Student.find(query)
-            .select('-__v')
-            .sort({ name: 1 }); // Sort by name alphabetically
+        const tutorId = req.user.id;
+        
+        // Get the tutor's assignments
+        const tutorAssignment = await TutorAssignment.findOne({ tutor: tutorId });
+
+        if (!tutorAssignment) {
+            return res.json({
+                success: true,
+                data: []
+            });
+        }
+
+        if (!tutorAssignment.assignments || tutorAssignment.assignments.length === 0) {
+            return res.json({
+                success: true,
+                data: []
+            });
+        }
+
+        // Create query for finding students
+        const query = {
+            $or: tutorAssignment.assignments.map(({ department, semester }) => ({
+                department,
+                semester: Number(semester)
+            }))
+        };
+
+        // Get students that match the tutor's department-semester assignments
+        const students = await Student.find(query).sort({ name: 1 });
 
         // Get fines for each student
         const studentsWithFines = await Promise.all(
@@ -34,10 +60,10 @@ const getRegistrations = async (req, res) => {
             data: studentsWithFines
         });
     } catch (error) {
-        console.error('Get registrations error:', error);
+        console.error('Error in getRegistrations:', error);
         res.status(500).json({
             success: false,
-            message: 'Error fetching registrations'
+            message: error.message || 'Error fetching registrations'
         });
     }
 };

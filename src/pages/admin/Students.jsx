@@ -240,14 +240,23 @@ const Students = () => {
                                     </div>
                                     <div className={styles.formGroup}>
                                         <label className={styles.formLabel}>Department</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             className={styles.formInput}
                                             name="department"
                                             value={values.department}
                                             onChange={handleChange}
                                             required
-                                        />
+                                        >
+                                            <option value="">Select Department</option>
+                                            <option value="CSE">CSE</option>
+                                            <option value="ECE">ECE</option>
+                                            <option value="CE">CE</option>
+                                            <option value="ME">ME</option>
+                                            <option value="SFE">SFE</option>
+                                            <option value="CSCS">CSCS</option>
+                                            <option value="CSBS">CSBS</option>
+                                            <option value="AI&DS">AI&DS</option>
+                                        </select>
                                     </div>
                                     <div className={styles.formGroup}>
                                         <label className={styles.formLabel}>Semester</label>

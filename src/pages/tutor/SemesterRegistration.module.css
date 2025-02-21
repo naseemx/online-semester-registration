@@ -1,0 +1,442 @@
+.container {
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: calc(100vh - 64px);
+    background-color: var(--bg-secondary);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    background-color: var(--bg-primary);
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.createButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.createButton:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.formCard {
+    background-color: var(--bg-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.formCard h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+}
+
+.form {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.formGroup select,
+.formGroup input {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.formGroup select:focus,
+.formGroup input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.submitButton,
+.cancelButton {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submitButton {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+}
+
+.submitButton:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.cancelButton {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.cancelButton:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--text-secondary);
+}
+
+.registrationsList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.registrationCard {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.registrationCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.registrationHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.registrationTitle {
+    flex: 1;
+}
+
+.registrationTitle h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status.active {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.status.inactive {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+}
+
+.registrationInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.infoItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.infoItem svg {
+    color: var(--accent-color);
+}
+
+.infoItem p {
+    margin: 0;
+}
+
+.statistics {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+}
+
+.statItem strong {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.statItem span {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.cardActions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: flex-end;
+}
+
+.actionButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.actionButton:hover:not(:disabled) {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.actionButton:disabled {
+    background-color: var(--disabled-bg);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.buttonText {
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
+    color: inherit;
+}
+
+.spinnerContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: inherit;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 3rem;
+    background-color: var(--bg-primary);
+    border-radius: 12px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.empty svg {
+    font-size: 3rem;
+    color: var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .createButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .statistics {
+        padding: 0.75rem;
+    }
+
+    .statItem {
+        gap: 0.5rem;
+    }
+
+    .statItem strong {
+        font-size: 1.25rem;
+    }
+
+    .statItem span {
+        font-size: 0.75rem;
+    }
+
+    .cardActions {
+        flex-direction: column;
+    }
+
+    .actionButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .registrationsList {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .registrationsList {
+        grid-template-columns: 1fr;
+    }
+
+    .statistics {
+        padding: 0.5rem;
+    }
+}
+
+/* Animation classes */
+.animate__rotateIn {
+    animation: rotateIn 0.5s ease-in-out;
+}
+
+.animate__bounceIn {
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes rotateIn {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Dark mode styles */
+:global(.dark-mode) .actionButton {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+:global(.dark-mode) .actionButton:hover:not(:disabled) {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+:global(.dark-mode) .actionButton:disabled {
+    background-color: var(--disabled-bg);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+:global(.dark-mode) .buttonText,
+:global(.dark-mode) .spinnerContainer {
+    color: var(--dark-text);
+}

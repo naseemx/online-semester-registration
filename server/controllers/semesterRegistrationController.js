@@ -1,0 +1,451 @@
+const SemesterRegistration = require('../models/SemesterRegistration');
+const Student = require('../models/Student');
+const TutorAssignment = require('../models/TutorAssignment');
+const Notification = require('../models/Notification');
+const { sendEmail } = require('../utils/email');
+
+// Get all registrations for a tutor
+const getRegistrations = async (req, res) => {
+    try {
+        const registrations = await SemesterRegistration.find({ createdBy: req.user._id })
+            .populate({
+                path: 'students.student',
+                select: 'name admissionNumber email department semester'
+            })
+            .sort('-createdAt');
+
+        // Filter out null students and recalculate counts
+        const processedRegistrations = registrations.map(reg => {
+            // Filter out entries where student is null
+            reg.students = reg.students.filter(s => s.student != null);
+            return reg;
+        });
+
+        console.log('Found registrations:', processedRegistrations.map(reg => ({
+            id: reg._id,
+            department: reg.department,
+            semester: reg.semester,
+            studentCount: reg.students.length,
+            students: reg.students.map(s => ({
+                id: s.student?._id,
+                name: s.student?.name,
+                status: s.status
+            }))
+        })));
+
+        res.json({
+            success: true,
+            data: processedRegistrations
+        });
+    } catch (error) {
+        console.error('Get registrations error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching registrations'
+        });
+    }
+};
+
+// Create new semester registration
+const createRegistration = async (req, res) => {
+    try {
+        const { department, semester, deadline } = req.body;
+        console.log('Creating new registration:', { department, semester, deadline });
+
+        // Validate required fields
+        if (!department || !semester || !deadline) {
+            console.log('Missing required fields:', { department, semester, deadline });
+            return res.status(400).json({
+                success: false,
+                message: 'Department, semester, and deadline are required'
+            });
+        }
+
+        // Check if tutor is assigned to this department and semester
+        const tutorAssignment = await TutorAssignment.findOne({
+            tutor: req.user._id,
+            assignments: { 
+                $elemMatch: { 
+                    department, 
+                    semester: parseInt(semester)
+                } 
+            }
+        });
+
+        console.log('Found tutor assignment:', tutorAssignment);
+
+        if (!tutorAssignment) {
+            console.log('Tutor not assigned to:', { department, semester });
+            return res.status(403).json({
+                success: false,
+                message: 'You are not assigned to this department and semester'
+            });
+        }
+
+        // Find all active students in this department and semester
+        const students = await Student.find({ 
+            department, 
+            semester: parseInt(semester)
+        });
+
+        console.log('Found students:', {
+            count: students.length,
+            studentIds: students.map(s => s._id),
+            details: students.map(s => ({
+                id: s._id,
+                name: s.name,
+                department: s.department,
+                semester: s.semester
+            }))
+        });
+
+        // Check if there are any students
+        if (students.length === 0) {
+            console.log('No students found for:', { department, semester });
+            return res.status(400).json({
+                success: false,
+                message: 'No students found in this department and semester'
+            });
+        }
+
+        // Create new registration
+        const registration = new SemesterRegistration({
+            department,
+            semester: parseInt(semester),
+            deadline: new Date(deadline),
+            createdBy: req.user._id,
+            status: 'active',
+            students: students.map(student => ({
+                student: student._id,
+                status: 'pending'
+            }))
+        });
+
+        console.log('Created registration object:', {
+            id: registration._id,
+            department: registration.department,
+            semester: registration.semester,
+            studentCount: registration.students.length,
+            students: registration.students.map(s => ({
+                studentId: s.student,
+                status: s.status
+            }))
+        });
+
+        await registration.save();
+        console.log('Registration saved successfully');
+
+        // Send notifications to students
+        for (const student of students) {
+            const notification = new Notification({
+                recipient: student._id,
+                message: `A new semester registration has been created for ${department} - Semester ${semester}. Deadline: ${new Date(deadline).toLocaleDateString()}`,
+                type: 'info'
+            });
+
+            await notification.save();
+
+            try {
+                await sendEmail({
+                    email: student.email,
+                    subject: 'New Semester Registration Available',
+                    message: `
+Dear ${student.name},
+
+We hope this email finds you well. A new semester registration has been initiated for:
+
+Department: ${department}
+Semester: ${semester}
+Deadline: ${new Date(deadline).toLocaleDateString()}
+
+Important Instructions:
+1. Log in to the SR System portal
+2. Navigate to the Registration section
+3. Complete all required verifications (Library, Lab, and Office)
+4. Ensure all pending fines are cleared
+5. Submit your registration before the deadline
+
+Please note that failure to complete the registration before the deadline may result in late registration fees or other academic consequences.
+
+If you encounter any issues during the registration process, please contact your department coordinator or the academic office for assistance.
+
+Best regards,
+Academic Affairs Office
+SR System
+                    `
+                });
+            } catch (emailError) {
+                console.error('Error sending email to student:', emailError);
+                // Continue with the process even if email fails
+            }
+        }
+
+        res.status(201).json({
+            success: true,
+            data: registration,
+            message: 'Semester registration created successfully'
+        });
+    } catch (error) {
+        console.error('Create registration error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error creating semester registration'
+        });
+    }
+};
+
+// Update registration
+const updateRegistration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { deadline, status } = req.body;
+
+        const registration = await SemesterRegistration.findOne({
+            _id: id,
+            createdBy: req.user._id
+        });
+
+        if (!registration) {
+            return res.status(404).json({
+                success: false,
+                message: 'Registration not found'
+            });
+        }
+
+        registration.deadline = deadline || registration.deadline;
+        registration.status = status || registration.status;
+
+        await registration.save();
+
+        if (status === 'inactive') {
+            // Notify students if registration is deactivated
+            const notification = new Notification({
+                title: 'Semester Registration Update',
+                message: `The semester registration for ${registration.department} - Semester ${registration.semester} has been deactivated.`,
+                type: 'warning',
+                recipients: 'students',
+                createdBy: req.user._id
+            });
+
+            await notification.save();
+        }
+
+        res.json({
+            success: true,
+            data: registration,
+            message: 'Registration updated successfully'
+        });
+    } catch (error) {
+        console.error('Update registration error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating registration'
+        });
+    }
+};
+
+// Get registration statistics
+const getStatistics = async (req, res) => {
+    try {
+        const registrationId = req.params.id;
+        console.log('\n=== Starting getStatistics ===');
+        console.log('Registration ID:', registrationId);
+        
+        // Get registration with populated students
+        const populatedRegistration = await SemesterRegistration.findById(registrationId)
+            .populate({
+                path: 'students.student',
+                select: 'name admissionNumber email department semester'
+            });
+
+        if (!populatedRegistration) {
+            console.log('Registration not found');
+            return res.status(404).json({
+                success: false,
+                message: 'Registration not found'
+            });
+        }
+
+        console.log('Found registration:', {
+            department: populatedRegistration.department,
+            semester: populatedRegistration.semester,
+            totalStudents: populatedRegistration.students.length
+        });
+
+        // Filter out null students
+        const validStudents = populatedRegistration.students.filter(s => s.student != null);
+
+        console.log('Valid students after filtering:', {
+            totalValid: validStudents.length,
+            students: validStudents.map(s => ({
+                studentId: s.student._id,
+                name: s.student.name,
+                status: s.status
+            }))
+        });
+
+        // Count statistics
+        const totalStudents = validStudents.length;
+        const pendingCount = validStudents.filter(s => s.status === 'pending').length;
+        const submittedCount = validStudents.filter(s => s.status === 'submitted').length;
+        const approvedCount = validStudents.filter(s => s.status === 'approved').length;
+
+        const statistics = {
+            totalStudents,
+            pending: pendingCount,
+            submitted: submittedCount,
+            approved: approvedCount
+        };
+
+        console.log('Final calculated statistics:', statistics);
+        console.log('=== End getStatistics ===\n');
+
+        res.json({
+            success: true,
+            data: statistics
+        });
+    } catch (error) {
+        console.error('Get statistics error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching statistics'
+        });
+    }
+};
+
+// Send reminder emails
+const sendReminders = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const registration = await SemesterRegistration.findOne({
+            _id: id,
+            createdBy: req.user._id
+        }).populate('students.student', 'name email');
+
+        if (!registration) {
+            return res.status(404).json({
+                success: false,
+                message: 'Registration not found'
+            });
+        }
+
+        const pendingStudents = registration.students.filter(s => s.status === 'pending');
+
+        // Send reminder notifications and emails
+        for (const { student } of pendingStudents) {
+            // Create individual notification for each student
+            const notification = new Notification({
+                recipient: student._id,
+                message: `Reminder: Please complete your semester registration for ${registration.department} - Semester ${registration.semester}. Deadline: ${new Date(registration.deadline).toLocaleDateString()}`,
+                type: 'warning'
+            });
+
+            await notification.save();
+
+            try {
+                await sendEmail({
+                    email: student.email,
+                    subject: 'URGENT: Semester Registration Reminder',
+                    message: `
+Dear ${student.name},
+
+This is an important reminder regarding your pending semester registration for:
+
+Department: ${registration.department}
+Semester: ${registration.semester}
+Deadline: ${new Date(registration.deadline).toLocaleDateString()}
+
+Your registration status is still showing as PENDING. To avoid any academic complications, please complete your registration as soon as possible.
+
+Required Actions:
+1. Log in to the SR System immediately
+2. Complete any pending verifications
+3. Clear any outstanding fines
+4. Submit your registration
+
+If you are experiencing any difficulties with the registration process, please don't hesitate to reach out to your department coordinator or the academic office for assistance.
+
+Please note that failure to complete the registration by the deadline may result in:
+- Late registration fees
+- Delayed course enrollment
+- Other academic consequences
+
+Take immediate action to ensure your registration is completed on time.
+
+Best regards,
+Academic Affairs Office
+SR System
+                    `
+                });
+            } catch (emailError) {
+                console.error('Error sending email to student:', emailError);
+                // Continue with the process even if email fails
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Reminders sent successfully'
+        });
+    } catch (error) {
+        console.error('Send reminders error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error sending reminders'
+        });
+    }
+};
+
+// Delete registration
+const deleteRegistration = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const registration = await SemesterRegistration.findOne({
+            _id: id,
+            createdBy: req.user._id
+        }).populate('students.student', '_id');
+
+        if (!registration) {
+            return res.status(404).json({
+                success: false,
+                message: 'Registration not found'
+            });
+        }
+
+        // Create notification for each student
+        for (const { student } of registration.students) {
+            const notification = new Notification({
+                recipient: student._id,
+                message: `The semester registration for ${registration.department} - Semester ${registration.semester} has been deleted.`,
+                type: 'warning'
+            });
+
+            await notification.save();
+        }
+
+        // Delete the registration
+        await SemesterRegistration.deleteOne({ _id: id });
+
+        res.json({
+            success: true,
+            message: 'Registration deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete registration error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting registration'
+        });
+    }
+};
+
+module.exports = {
+    getRegistrations,
+    createRegistration,
+    updateRegistration,
+    deleteRegistration,
+    getStatistics,
+    sendReminders
+};

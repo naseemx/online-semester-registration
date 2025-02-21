@@ -1,16 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const { getRegistrations, sendStatusEmail, generateReport, sendSemesterEmail } = require('../controllers/tutorController');
 const { isAuthenticated, hasRole } = require('../middleware/auth');
+const { getRegistrations, sendStatusEmail, generateReport } = require('../controllers/tutorController');
+const { 
+    getRegistrations: getSemesterRegistrations,
+    createRegistration,
+    updateRegistration,
+    deleteRegistration,
+    getStatistics,
+    sendReminders
+} = require('../controllers/semesterRegistrationController');
+const { getTutorAssignments, createTestAssignment } = require('../controllers/tutorAssignmentController');
 
-// All routes require authentication and tutor role
-router.use(isAuthenticated);
-router.use(hasRole(['tutor']));
+// Student registration routes
+router.get('/registrations', isAuthenticated, hasRole(['tutor']), getRegistrations);
+router.post('/registrations/:studentId/send-status', isAuthenticated, hasRole(['tutor']), sendStatusEmail);
 
-// Tutor routes
-router.get('/registrations', getRegistrations);
-router.post('/registrations/:studentId/send-status', sendStatusEmail);
-router.get('/reports/:type', generateReport);
-router.post('/semester-email', sendSemesterEmail);
+// Report routes
+router.get('/reports/:type', isAuthenticated, hasRole(['tutor']), generateReport);
+
+// Tutor assignments routes
+router.get('/assignments/me', isAuthenticated, hasRole(['tutor']), getTutorAssignments);
+router.post('/assignments/test', isAuthenticated, hasRole(['tutor']), createTestAssignment);
+
+// Semester registration routes
+router.get('/semester-registrations', isAuthenticated, hasRole(['tutor']), getSemesterRegistrations);
+router.post('/semester-registrations', isAuthenticated, hasRole(['tutor']), createRegistration);
+router.put('/semester-registrations/:id', isAuthenticated, hasRole(['tutor']), updateRegistration);
+router.delete('/semester-registrations/:id', isAuthenticated, hasRole(['tutor']), deleteRegistration);
+router.get('/semester-registrations/:id/statistics', isAuthenticated, hasRole(['tutor']), getStatistics);
+router.post('/semester-registrations/:id/reminders', isAuthenticated, hasRole(['tutor']), sendReminders);
 
 module.exports = router; 

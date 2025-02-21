@@ -317,7 +317,7 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
                     <option value="">Select Role</option>
                     <option value="admin">Admin</option>
                     <option value="tutor">Tutor</option>
-                    <option value="staff">Staff</option>
+                                            <option value="staff">Staff</option>
                                         </select>
                                     </div>
             {!user && (

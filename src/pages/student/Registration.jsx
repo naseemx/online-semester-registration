@@ -17,10 +17,29 @@ const Registration = () => {
     const fetchStatus = async () => {
         try {
             setLoading(true);
+            setError('');
             const response = await studentAPI.getStatus();
-            setStatus(response.data.data);
+            if (response.data.success) {
+                const data = response.data.data;
+                console.log('Student status data:', data);
+
+                // Check if there are any active registrations
+                const hasActiveRegistration = data.activeRegistrations && data.activeRegistrations.length > 0;
+
+                if (!hasActiveRegistration) {
+                    console.log('No active registrations found');
+                    setError('No active registration available for your department and semester.');
+                } else {
+                    console.log('Found active registrations:', data.activeRegistrations);
+                }
+
+                setStatus(data);
+            } else {
+                throw new Error(response.data.message || 'Failed to fetch status');
+            }
         } catch (err) {
             setError('Error fetching status');
+            console.error('Error:', err);
         } finally {
             setLoading(false);
         }
@@ -44,6 +63,14 @@ const Registration = () => {
             // Check for pending fines before proceeding
             if (hasPendingFines(status.fines)) {
                 setError('Cannot apply for registration. Please clear all pending fines first.');
+                return;
+            }
+
+            // Check if there is an active registration
+            const hasActiveRegistration = status.activeRegistrations && status.activeRegistrations.length > 0;
+
+            if (!hasActiveRegistration) {
+                setError('No active registration available for your department and semester.');
                 return;
             }
 
