@@ -13,7 +13,6 @@ import SemesterRegistration from './pages/tutor/SemesterRegistration';
 import Dashboard from './pages/admin/Dashboard';
 import Users from './pages/admin/Users';
 import Students from './pages/admin/Students';
-import Settings from './pages/admin/Settings';
 import Logs from './pages/admin/Logs';
 import Notifications from './pages/admin/Notifications';
 import Profile from './pages/Profile';
@@ -123,7 +122,6 @@ const App = () => {
                                                     <Route path="users" element={<Users />} />
                                                     <Route path="students" element={<Students />} />
                                                     <Route path="tutor-assignments" element={<TutorAssignments />} />
-                                                    <Route path="settings" element={<Settings />} />
                                                     <Route path="logs" element={<Logs />} />
                                                     <Route path="notifications" element={<Notifications />} />
                                                     <Route path="" element={<Navigate to="dashboard" replace />} />

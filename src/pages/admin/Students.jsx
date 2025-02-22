@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminAPI } from '../../utils/api';
 import { FaGraduationCap, FaSearch, FaPlus, FaEdit, FaTrash, FaSpinner } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import useForm from '../../hooks/useForm';
 import styles from './Students.module.css';
 import 'animate.css';
@@ -8,7 +9,6 @@ import 'animate.css';
 const Students = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
@@ -31,9 +31,14 @@ const Students = () => {
         try {
             setLoading(true);
             const response = await adminAPI.getStudents();
-            setStudents(response.data.data);
-        } catch (err) {
-            setError('Error fetching students');
+            if (response.data?.success) {
+                setStudents(response.data.data);
+            } else {
+                throw new Error(response.data?.message || 'Failed to fetch students');
+            }
+        } catch (error) {
+            console.error('Error fetching students:', error);
+            toast.error(error.message || 'Failed to fetch students');
         } finally {
             setLoading(false);
         }
@@ -41,40 +46,52 @@ const Students = () => {
 
     const handleCreateStudent = async (formData) => {
         try {
-            setError('');
             const response = await adminAPI.createStudent(formData);
-            if (response.data.success) {
+            if (response.data?.success) {
+                toast.success('Student created successfully');
                 fetchStudents();
                 setShowForm(false);
                 reset();
             } else {
-                setError(response.data.message || 'Error creating student');
+                throw new Error(response.data?.message || 'Failed to create student');
             }
-        } catch (err) {
-            setError(err.response?.data?.message || 'Error creating student');
+        } catch (error) {
+            console.error('Error creating student:', error);
+            toast.error(error.message || 'Failed to create student');
         }
     };
 
     const handleUpdateStudent = async (formData) => {
         try {
-            setError('');
-            await adminAPI.updateStudent(editingStudent._id, formData);
-            fetchStudents();
-            setShowForm(false);
-            setEditingStudent(null);
-            reset();
-        } catch (err) {
-            setError('Error updating student');
+            const response = await adminAPI.updateStudent(editingStudent._id, formData);
+            if (response.data?.success) {
+                toast.success('Student updated successfully');
+                fetchStudents();
+                setShowForm(false);
+                setEditingStudent(null);
+                reset();
+            } else {
+                throw new Error(response.data?.message || 'Failed to update student');
+            }
+        } catch (error) {
+            console.error('Error updating student:', error);
+            toast.error(error.message || 'Failed to update student');
         }
     };
 
     const handleDeleteStudent = async (studentId) => {
         try {
             setDeleting(studentId);
-            await adminAPI.deleteStudent(studentId);
-            fetchStudents();
-        } catch (err) {
-            setError('Error deleting student');
+            const response = await adminAPI.deleteStudent(studentId);
+            if (response.data?.success) {
+                toast.success('Student deleted successfully');
+                fetchStudents();
+            } else {
+                throw new Error(response.data?.message || 'Failed to delete student');
+            }
+        } catch (error) {
+            console.error('Error deleting student:', error);
+            toast.error(error.message || 'Failed to delete student');
         } finally {
             setDeleting(null);
         }
@@ -134,12 +151,6 @@ const Students = () => {
                             </div>
                         </div>
                         <div className={styles.cardBody}>
-                            {error && (
-                                <div className={styles.errorAlert}>
-                                    {error}
-                                </div>
-                            )}
-
                             <div className={styles.tableContainer}>
                                 <table className={styles.table}>
                                     <thead>

@@ -1,269 +1,367 @@
 import React, { useState, useEffect } from 'react';
-import { FaFilter, FaSearch, FaEnvelope, FaSpinner, FaCheckCircle, FaTimesCircle, FaExclamationCircle } from 'react-icons/fa';
 import { tutorAPI } from '../../utils/api';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
+import {
+    Table,
+    Button,
+    Tag,
+    Input,
+    Select,
+    Space,
+    Drawer,
+    Descriptions,
+    Typography,
+    theme,
+    ConfigProvider,
+    Card,
+    Spin
+} from 'antd';
+import {
+    CheckCircleOutlined,
+    MailOutlined,
+    SearchOutlined,
+    InfoCircleOutlined,
+    FilterOutlined
+} from '@ant-design/icons';
 import styles from './Registrations.module.css';
 
-const Registrations = () => {
-    const [registrations, setRegistrations] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All Statuses');
-    const [selectedDepartment, setSelectedDepartment] = useState('All');
-    const [sendingEmail, setSendingEmail] = useState(null);
-    const [selectedRegistration, setSelectedRegistration] = useState(null);
+const { Search } = Input;
+const { Option } = Select;
+const { Title, Text } = Typography;
+const { useToken } = theme;
 
-    const departments = ['All', 'Computer Science', 'Electrical', 'Mechanical', 'Civil'];
-    const statuses = ['All Statuses', 'Not Started', 'In Progress', 'Completed', 'Rejected'];
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2
+    }).format(amount);
+};
+
+const Registrations = () => {
+    const { token } = useToken();
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [selectedDepartment, setSelectedDepartment] = useState('all');
+    const [selectedSemester, setSelectedSemester] = useState('all');
+    const [tutorAssignments, setTutorAssignments] = useState([]);
+    const [drawerVisible, setDrawerVisible] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [actionLoading, setActionLoading] = useState({});
 
     useEffect(() => {
-        fetchRegistrations();
+        fetchTutorAssignments();
     }, []);
 
-    const fetchRegistrations = async () => {
+    const fetchTutorAssignments = async () => {
         try {
             setLoading(true);
-            const response = await tutorAPI.getRegistrations();
-            if (response.data.success) {
-                const registrationsWithStudents = await Promise.all(
-                    response.data.data.map(async (reg) => {
-                        const studentsResponse = await tutorAPI.getRegistrationStudents(reg._id);
-                        return {
-                            ...reg,
-                            students: studentsResponse.data.success ? studentsResponse.data.data : []
-                        };
-                    })
-                );
-                setRegistrations(registrationsWithStudents);
+            const response = await tutorAPI.getTutorAssignments();
+            if (response.data?.success) {
+                setTutorAssignments(response.data.data?.assignments || []);
+                await fetchStudents();
             } else {
-                toast.error(response.data.message || 'Failed to fetch registrations');
+                toast.error('Failed to fetch tutor assignments');
             }
         } catch (error) {
-            console.error('Fetch registrations error:', error);
-            toast.error(error.response?.data?.message || 'Error fetching registrations');
+            console.error('Error fetching tutor assignments:', error);
+            toast.error('Failed to fetch tutor assignments');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSendMail = async (studentId, email) => {
+    const fetchStudents = async () => {
         try {
-            setSendingEmail(studentId);
-            const response = await tutorAPI.sendStatusEmail(studentId);
-            if (!response.data.success) {
-                throw new Error('Failed to send email');
+            setLoading(true);
+            const response = await tutorAPI.getRegistrations();
+            if (response.data?.success) {
+                setStudents(response.data.data || []);
+            } else {
+                toast.error('Failed to load student data');
             }
-            toast.success('Status email sent successfully');
-        } catch (err) {
-            console.error('Error sending email:', err.formattedMessage || err.message);
-            toast.error(err.formattedMessage || 'Failed to send email');
+        } catch (error) {
+            console.error('Error fetching students:', error);
+            toast.error('Failed to fetch students');
         } finally {
-            setSendingEmail(null);
+            setLoading(false);
         }
     };
 
-    const handleViewStudents = (registration) => {
-        setSelectedRegistration(registration);
+    const handleApprove = async (studentId) => {
+        try {
+            setActionLoading(prev => ({ ...prev, [studentId]: true }));
+            const response = await tutorAPI.approveRegistration(studentId);
+            if (response.data?.success) {
+                toast.success('Registration approved successfully');
+                await fetchStudents();
+            } else {
+                throw new Error(response.data?.message || 'Failed to approve registration');
+            }
+        } catch (error) {
+            console.error('Approve error:', error);
+            toast.error(error.response?.data?.message || 'Failed to approve registration');
+        } finally {
+            setActionLoading(prev => ({ ...prev, [studentId]: false }));
+        }
     };
 
-    const filteredRegistrations = registrations.filter(reg => {
-        const matchesSearch = (reg.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (reg.admissionNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (reg.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'All Statuses' || reg.registrationStatus === statusFilter;
-        const matchesDepartment = selectedDepartment === 'All' || reg.department === selectedDepartment;
-        
-        return matchesSearch && matchesStatus && matchesDepartment;
-    });
-    
-    console.log('Filtered registrations count:', filteredRegistrations.length);
+    const handleSendStatus = async (studentId) => {
+        try {
+            setActionLoading(prev => ({ ...prev, [studentId]: true }));
+            const response = await tutorAPI.sendStatusEmail(studentId);
+            if (response.data?.success) {
+                toast.success('Status email sent successfully');
+            } else {
+                throw new Error(response.data?.message || 'Failed to send status email');
+            }
+        } catch (error) {
+            console.error('Error sending status email:', error);
+            toast.error('Failed to send status email');
+        } finally {
+            setActionLoading(prev => ({ ...prev, [studentId]: false }));
+        }
+    };
 
-    if (loading && !registrations.length) {
+    const handleShowDetails = (student) => {
+        setSelectedStudent(student);
+        setDrawerVisible(true);
+    };
+
+    const getStatusColor = (status) => {
+        const statusColors = {
+            'not started': 'default',
+            'in progress': 'processing',
+            'submitted': 'warning',
+            'approved': 'success',
+            'rejected': 'error'
+        };
+        return statusColors[status?.toLowerCase()] || 'default';
+    };
+
+    const getFineStatus = (fines) => {
+        if (!fines) return { status: 'success', text: 'No Fines' };
+        
+        const hasPendingFines = Object.values(fines).some(fine => 
+            fine.status === 'pending' && fine.amount > 0
+        );
+        
+        return hasPendingFines 
+            ? { status: 'error', text: 'Pending Fines' }
+            : { status: 'success', text: 'Cleared' };
+    };
+
+    // Filter students based on search, department, and semester
+    const filteredStudents = students.filter(student => {
+        const matchesSearch = searchText.trim() === '' || 
+            student.name.toLowerCase().includes(searchText.toLowerCase()) ||
+            student.admissionNumber.toLowerCase().includes(searchText.toLowerCase());
+            
+        const matchesDepartment = selectedDepartment === 'all' || student.department === selectedDepartment;
+        const matchesSemester = selectedSemester === 'all' || student.semester.toString() === selectedSemester;
+        
+        return matchesSearch && matchesDepartment && matchesSemester;
+    });
+
+    // Get unique departments and semesters
+    const departments = [...new Set(tutorAssignments.map(a => a.department))].filter(Boolean);
+    const semesters = [...new Set(tutorAssignments.map(a => a.semester))].filter(Boolean).sort((a, b) => a - b);
+
+    const columns = [
+        {
+            title: 'Name',
+            dataIndex: 'name',
+            key: 'name',
+            render: (text, record) => (
+                <Button 
+                    type="link" 
+                    onClick={() => handleShowDetails(record)}
+                    className={styles.nameLink}
+                >
+                    {text} <InfoCircleOutlined />
+                </Button>
+            )
+        },
+        {
+            title: 'Admission Number',
+            dataIndex: 'admissionNumber',
+            key: 'admissionNumber'
+        },
+        {
+            title: 'Department',
+            dataIndex: 'department',
+            key: 'department'
+        },
+        {
+            title: 'Semester',
+            dataIndex: 'semester',
+            key: 'semester'
+        },
+        {
+            title: 'Registration Status',
+            key: 'registrationStatus',
+            render: (_, record) => (
+                <Tag color={getStatusColor(record.registrationDetails?.status)} className={styles.tag}>
+                    {record.registrationDetails?.status?.toUpperCase() || 'NOT STARTED'}
+                </Tag>
+            )
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Space size="small">
+                    <Button
+                        className={styles.actionButton}
+                        icon={<MailOutlined />}
+                        loading={actionLoading[record._id]}
+                        onClick={() => handleSendStatus(record._id)}
+                        title="Send Status Email"
+                    >
+                        Send Status
+                    </Button>
+                    <Button
+                        type="primary"
+                        className={styles.actionButton}
+                        icon={<CheckCircleOutlined />}
+                        loading={actionLoading[record._id]}
+                        onClick={() => handleApprove(record._id)}
+                        disabled={record.registrationDetails?.status !== 'submitted'}
+                        title="Approve Registration"
+                    >
+                        Approve
+                    </Button>
+                </Space>
+            )
+        }
+    ];
+
+    const renderDrawerContent = () => {
+        if (!selectedStudent) return null;
+
+        const fineStatus = getFineStatus(selectedStudent.fines);
+
         return (
-            <div className={styles.loadingContainer}>
-                <FaSpinner className={styles.spinner} />
-                <p>Loading registrations...</p>
+            <div className={styles.drawerContent}>
+                <Descriptions
+                    bordered
+                    column={1}
+                    className={styles.descriptions}
+                >
+                    <Descriptions.Item label="Name">{selectedStudent.name}</Descriptions.Item>
+                    <Descriptions.Item label="Admission Number">{selectedStudent.admissionNumber}</Descriptions.Item>
+                    <Descriptions.Item label="Department">{selectedStudent.department}</Descriptions.Item>
+                    <Descriptions.Item label="Semester">{selectedStudent.semester}</Descriptions.Item>
+                    <Descriptions.Item label="Registration Status">
+                        <Tag color={getStatusColor(selectedStudent.registrationDetails?.status)} className={styles.tag}>
+                            {selectedStudent.registrationDetails?.status?.toUpperCase() || 'NOT STARTED'}
+                        </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Fine Status">
+                        <Tag color={fineStatus.status} className={styles.tag}>
+                            {fineStatus.text}
+                        </Tag>
+                    </Descriptions.Item>
+                </Descriptions>
+
+                <div className={styles.drawerActions}>
+                    <Space size="middle">
+                        <Button
+                            className={styles.actionButton}
+                            icon={<MailOutlined />}
+                            loading={actionLoading[selectedStudent._id]}
+                            onClick={() => handleSendStatus(selectedStudent._id)}
+                        >
+                            Send Status
+                        </Button>
+                        <Button
+                            type="primary"
+                            className={styles.actionButton}
+                            icon={<CheckCircleOutlined />}
+                            loading={actionLoading[selectedStudent._id]}
+                            onClick={() => handleApprove(selectedStudent._id)}
+                            disabled={selectedStudent.registrationDetails?.status !== 'submitted'}
+                        >
+                            Approve
+                        </Button>
+                    </Space>
+                </div>
             </div>
         );
-    }
+    };
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <h2>Student Registrations</h2>
-                {error && <div className={styles.error}>{error}</div>}
-                <div className={styles.filters}>
-                    <div className={styles.searchBox}>
-                        <FaSearch className={styles.searchIcon} />
-                        <input
-                            type="text"
-                            placeholder="Search by name, ID or email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className={styles.filterGroup}>
-                        <FaFilter className={styles.filterIcon} />
-                                <select 
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                            className={styles.filterSelect}
-                        >
-                            {statuses.map(status => (
-                                <option key={status} value={status}>{status}</option>
-                            ))}
-                        </select>
-                        <select
-                            value={selectedDepartment}
-                            onChange={(e) => setSelectedDepartment(e.target.value)}
-                            className={styles.filterSelect}
-                        >
-                            {departments.map(dept => (
-                                <option key={dept} value={dept}>{dept}</option>
-                            ))}
-                                </select>
-                    </div>
-                </div>
-                        </div>
+            <Card className={styles.header}>
+                <Title level={2} className={styles.headerTitle}>
+                    Student Details
+                </Title>
+            </Card>
 
-            <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                            <thead>
-                                <tr>
-                            <th>Student Details</th>
-                            <th>Academic Info</th>
-                                    <th>Verification Status</th>
-                                    <th>Registration Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                        {filteredRegistrations.length === 0 ? (
-                            <tr>
-                                <td colSpan="5" className={styles.noData}>
-                                    No registrations found
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredRegistrations.map((reg) => (
-                                <tr key={reg._id} className={styles.tableRow}>
-                                    <td>
-                                        <div className={styles.studentInfo}>
-                                            <div className={styles.studentName}>
-                                                {reg.name}
-                                            </div>
-                                            <div className={styles.studentDetails}>
-                                                <div className={styles.studentId}>
-                                                    ID: {reg.admissionNumber}
-                                                </div>
-                                                <div className={styles.studentEmail}>
-                                                    {reg.email}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className={styles.academicInfo}>
-                                            <div className={styles.department}>
-                                                {reg.department}
-                                            </div>
-                                            <div className={styles.semester}>
-                                                Semester {reg.semester}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className={styles.verificationStatus}>
-                                            <div className={styles.statusItem}>
-                                                <span className={`${styles.statusIcon} ${reg.libraryStatus === 'clear' ? styles.verified : styles.pending}`}>
-                                                    {reg.libraryStatus === 'clear' ? <FaCheckCircle /> : <FaExclamationCircle />}
-                                                </span>
-                                                <span className={styles.statusLabel}>
-                                                    Library: {reg.libraryStatus === 'clear' ? 'Cleared' : 'Pending'}
-                                                </span>
-                                            </div>
-                                            <div className={styles.statusItem}>
-                                                <span className={`${styles.statusIcon} ${reg.labStatus === 'clear' ? styles.verified : styles.pending}`}>
-                                                    {reg.labStatus === 'clear' ? <FaCheckCircle /> : <FaExclamationCircle />}
-                                                </span>
-                                                <span className={styles.statusLabel}>
-                                                    Lab: {reg.labStatus === 'clear' ? 'Cleared' : 'Pending'}
-                                                </span>
-                                            </div>
-                                            <div className={styles.statusItem}>
-                                                <span className={`${styles.statusIcon} ${reg.officeStatus === 'clear' ? styles.verified : styles.pending}`}>
-                                                    {reg.officeStatus === 'clear' ? <FaCheckCircle /> : <FaExclamationCircle />}
-                                                </span>
-                                                <span className={styles.statusLabel}>
-                                                    Office: {reg.officeStatus === 'clear' ? 'Cleared' : 'Pending'}
-                                                </span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                        <span className={`${styles.status} ${styles[reg.registrationStatus?.toLowerCase().replace(' ', '') || 'notstarted']}`}>
-                                            {reg.registrationStatus || 'Not Started'}
-                                        </span>
-                                        </td>
-                                        <td>
-                                            <button
-                                            className={styles.actionButton}
-                                            onClick={() => handleSendMail(reg._id, reg.email)}
-                                            disabled={sendingEmail === reg._id}
-                                            title="Send Status Email"
-                                        >
-                                            {sendingEmail === reg._id ? (
-                                                <FaSpinner className={styles.spinner} />
-                                            ) : (
-                                                <FaEnvelope />
-                                                )}
-                                            </button>
-                                        </td>
-                                    </tr>
-                            ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+            <Card className={styles.filterSection}>
+                <Space wrap>
+                    <Search
+                        placeholder="Search by name or admission number"
+                        allowClear
+                        onChange={e => setSearchText(e.target.value)}
+                        className={styles.searchInput}
+                        prefix={<SearchOutlined />}
+                    />
+                    <Select
+                        placeholder="Select Department"
+                        value={selectedDepartment}
+                        onChange={setSelectedDepartment}
+                        className={styles.select}
+                    >
+                        <Option value="all">All Departments</Option>
+                        {departments.map(dept => (
+                            <Option key={dept} value={dept}>{dept}</Option>
+                        ))}
+                    </Select>
+                    <Select
+                        placeholder="Select Semester"
+                        value={selectedSemester}
+                        onChange={setSelectedSemester}
+                        className={styles.select}
+                    >
+                        <Option value="all">All Semesters</Option>
+                        {semesters.map(sem => (
+                            <Option key={sem} value={sem.toString()}>Semester {sem}</Option>
+                        ))}
+                    </Select>
+                </Space>
+            </Card>
 
-            <div className={styles.registrationsList}>
-                {registrations.map((registration) => (
-                    <div key={registration._id} className={styles.registrationCard}>
-                        <div className={styles.registrationHeader}>
-                            <h3>{registration.department} - Semester {registration.semester}</h3>
-                            <span className={styles.status}>{registration.status}</span>
-                        </div>
-                        <div className={styles.registrationDetails}>
-                            <p>Created: {new Date(registration.createdAt).toLocaleDateString()}</p>
-                            <p>Deadline: {new Date(registration.deadline).toLocaleDateString()}</p>
-                            <p>Students Registered: {registration.students?.length || 0}</p>
-                        </div>
-                        <button
-                            className={styles.viewButton}
-                            onClick={() => handleViewStudents(registration)}
-                        >
-                            View Students
-                        </button>
-                        {selectedRegistration?._id === registration._id && (
-                            <div className={styles.studentsList}>
-                                <h4>Registered Students</h4>
-                                {registration.students?.length > 0 ? (
-                                    <ul>
-                                        {registration.students.map((student) => (
-                                            <li key={student._id}>
-                                                {student.name} ({student.rollNumber})
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p>No students registered yet</p>
-                                )}
-                            </div>
-                        )}
-                </div>
-                ))}
-            </div>
+            <Card className={styles.tableContainer}>
+                <Table
+                    columns={columns}
+                    dataSource={filteredStudents}
+                    loading={loading}
+                    rowKey="_id"
+                    className={styles.table}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} students`
+                    }}
+                />
+            </Card>
+
+            <Drawer
+                title={
+                    <Text className={styles.drawerTitle}>
+                        Student Details
+                    </Text>
+                }
+                placement="right"
+                onClose={() => setDrawerVisible(false)}
+                visible={drawerVisible}
+                width={480}
+                className={styles.drawer}
+            >
+                {renderDrawerContent()}
+            </Drawer>
         </div>
     );
 };

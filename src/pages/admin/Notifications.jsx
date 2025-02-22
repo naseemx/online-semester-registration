@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { adminAPI } from '../../utils/api';
+import { notificationAPI } from '../../utils/api';
 import { 
     FaBell, FaEnvelope, FaExclamationTriangle, FaCheckCircle, 
     FaSpinner, FaTrash, FaEye, FaEyeSlash 
 } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import 'animate.css';
 
 const Notifications = () => {
@@ -30,9 +31,15 @@ const Notifications = () => {
     const fetchNotifications = async () => {
         try {
             setLoading(true);
-            const response = await adminAPI.getNotifications(filterStatus);
-            setNotifications(response.data.data);
+            const response = await notificationAPI.getAll();
+            if (response.data?.success) {
+                setNotifications(response.data.data || []);
+            } else {
+                throw new Error(response.data?.message || 'Failed to fetch notifications');
+            }
         } catch (err) {
+            console.error('Error fetching notifications:', err);
+            toast.error('Error fetching notifications');
             setError('Error fetching notifications');
         } finally {
             setLoading(false);
@@ -43,16 +50,23 @@ const Notifications = () => {
         e.preventDefault();
         try {
             setSending(true);
-            await adminAPI.sendNotification(newNotification);
-            setShowForm(false);
-            setNewNotification({
-                title: '',
-                message: '',
-                type: 'info',
-                recipients: 'all'
-            });
-            fetchNotifications();
+            const response = await notificationAPI.send(newNotification);
+            if (response.data?.success) {
+                toast.success('Notification sent successfully');
+                setShowForm(false);
+                setNewNotification({
+                    title: '',
+                    message: '',
+                    type: 'info',
+                    recipients: 'all'
+                });
+                await fetchNotifications();
+            } else {
+                throw new Error(response.data?.message || 'Failed to send notification');
+            }
         } catch (err) {
+            console.error('Error sending notification:', err);
+            toast.error('Error sending notification');
             setError('Error sending notification');
         } finally {
             setSending(false);
@@ -61,9 +75,16 @@ const Notifications = () => {
 
     const handleMarkAsRead = async (notificationId) => {
         try {
-            await adminAPI.markNotificationAsRead(notificationId);
-            fetchNotifications();
+            const response = await notificationAPI.markAsRead(notificationId);
+            if (response.data?.success) {
+                toast.success('Notification marked as read');
+                await fetchNotifications();
+            } else {
+                throw new Error(response.data?.message || 'Failed to mark notification as read');
+            }
         } catch (err) {
+            console.error('Error updating notification:', err);
+            toast.error('Error updating notification');
             setError('Error updating notification');
         }
     };
@@ -74,9 +95,16 @@ const Notifications = () => {
         }
 
         try {
-            await adminAPI.deleteNotification(notificationId);
-            fetchNotifications();
+            const response = await notificationAPI.delete(notificationId);
+            if (response.data?.success) {
+                toast.success('Notification deleted successfully');
+                await fetchNotifications();
+            } else {
+                throw new Error(response.data?.message || 'Failed to delete notification');
+            }
         } catch (err) {
+            console.error('Error deleting notification:', err);
+            toast.error('Error deleting notification');
             setError('Error deleting notification');
         }
     };

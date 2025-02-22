@@ -76,9 +76,10 @@ export const staffAPI = {
 
 // Tutor API calls
 export const tutorAPI = {
-    getRegistrations: (status) => api.get('/tutor/registrations', { params: { status } }),
+    getRegistrations: () => api.get('/tutor/registrations'),
     getRegistrationStudents: (registrationId) => api.get(`/tutor/registrations/${registrationId}/students`),
     sendStatusEmail: (studentId) => api.post(`/tutor/registrations/${studentId}/send-status`),
+    approveRegistration: (studentId) => api.post(`/tutor/registrations/${studentId}/approve`),
     getTutorAssignments: () => api.get('/tutor/assignments/me'),
     getSemesterRegistrations: () => api.get('/tutor/semester-registrations'),
     createSemesterRegistration: (data) => api.post('/tutor/semester-registrations', data),
@@ -97,36 +98,32 @@ export const tutorAPI = {
 // Admin API calls
 export const adminAPI = {
     getDashboardStats: () => api.get('/admin/dashboard/stats'),
-    getUsers: (params = {}) => api.get('/admin/users', { params }),
+    getUsers: (filters = {}) => api.get('/admin/users', { params: filters }),
     createUser: (userData) => api.post('/admin/users', userData),
     updateUser: (userId, userData) => api.put(`/admin/users/${userId}`, userData),
     deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
-    getStudents: () => api.get('/admin/students'),
+    getSystemLogs: () => api.get('/admin/logs'),
+    getLogs: () => api.get('/admin/logs'),
+    getSettings: () => api.get('/admin/settings'),
+    updateSettings: (settings) => api.put('/admin/settings', settings),
+    // Student management endpoints
+    getStudents: (filters = {}) => api.get('/admin/students', { params: filters }),
     createStudent: (studentData) => api.post('/admin/students', studentData),
     updateStudent: (studentId, studentData) => api.put(`/admin/students/${studentId}`, studentData),
     deleteStudent: (studentId) => api.delete(`/admin/students/${studentId}`),
-    
-    // Tutor Assignment endpoints
+    // Tutor assignment management endpoints
     getTutorAssignments: () => api.get('/admin/tutor-assignments'),
-    createTutorAssignment: (data) => api.post('/admin/tutor-assignments', data),
-    updateTutorAssignment: (id, data) => api.put(`/admin/tutor-assignments/${id}`, data),
-    deleteTutorAssignment: (id) => api.delete(`/admin/tutor-assignments/${id}`),
-    getTutorAssignmentStudents: (id) => api.get(`/admin/tutor-assignments/${id}/students`),
-    
-    // Settings endpoints
-    getSettings: () => api.get('/admin/settings'),
-    updateSettings: (settings) => api.put('/admin/settings', settings),
-    
-    // Log endpoints
-    getLogs: (params) => api.get('/admin/logs', { params }),
-    clearLogs: (before) => api.delete('/admin/logs', { params: { before } }),
-    exportLogs: (params) => api.get('/admin/logs/export', { params }),
-    
-    // Notification endpoints
-    getNotifications: (status) => api.get(`/admin/notifications${status ? `?status=${status}` : ''}`),
-    sendNotification: (data) => api.post('/admin/notifications', data),
-    markNotificationAsRead: (id) => api.put(`/admin/notifications/${id}/read`),
-    deleteNotification: (id) => api.delete(`/admin/notifications/${id}`)
+    getTutorAssignmentStudents: (assignmentId) => api.get(`/admin/tutor-assignments/${assignmentId}/students`),
+    createTutorAssignment: (assignmentData) => api.post('/admin/tutor-assignments', assignmentData),
+    updateTutorAssignment: (assignmentId, assignmentData) => api.put(`/admin/tutor-assignments/${assignmentId}`, assignmentData),
+    deleteTutorAssignment: (assignmentId) => api.delete(`/admin/tutor-assignments/${assignmentId}`)
 };
 
-export default api; 
+// Notification API calls
+export const notificationAPI = {
+    getAll: () => api.get('/api/notifications'),
+    getUnread: () => api.get('/api/notifications/unread'),
+    markAsRead: (id) => api.put(`/api/notifications/${id}/read`),
+    delete: (id) => api.delete(`/api/notifications/${id}`),
+    send: (data) => api.post('/api/notifications', data)
+};

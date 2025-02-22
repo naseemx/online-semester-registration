@@ -1,9 +1,13 @@
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
-    recipient: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        required: true
+    },
+    title: {
+        type: String,
         required: true
     },
     message: {
@@ -28,9 +32,8 @@ const notificationSchema = new mongoose.Schema({
     }
 });
 
-// Add indexes for better query performance
-notificationSchema.index({ recipient: 1, read: 1 });
-notificationSchema.index({ createdAt: -1 });
+// Index for faster queries
+notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 

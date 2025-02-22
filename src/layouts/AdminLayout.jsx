@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaChartBar, FaUsers, FaUserGraduate, FaCog, FaHistory, FaBell, FaUserFriends } from 'react-icons/fa';
+import { FaChartBar, FaUsers, FaUserGraduate, FaHistory, FaBell, FaUserFriends } from 'react-icons/fa';
 import Header from '../components/Header';
 import styles from './AdminLayout.module.css';
 
@@ -28,10 +28,6 @@ const AdminLayout = ({ children }) => {
                         <FaUserFriends />
                         <span>Tutor Assignments</span>
                     </Link>
-                    <Link to="/admin/settings" className={styles.navItem}>
-                        <FaCog />
-                        <span>Settings</span>
-                    </Link>
                     <Link to="/admin/logs" className={styles.navItem}>
                         <FaHistory />
                         <span>Logs</span>
@@ -52,4 +48,4 @@ const AdminLayout = ({ children }) => {
     );
 };
 
-export default AdminLayout; 
+export default AdminLayout;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaBell, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import { notificationAPI } from '../utils/api';
 import styles from './Header.module.css';
 
 const NotificationBell = () => {
@@ -22,7 +22,7 @@ const NotificationBell = () => {
     const fetchNotifications = async () => {
         try {
             setError(null);
-            const response = await api.get('/notifications/unread');
+            const response = await notificationAPI.getUnread();
             if (response.data.success) {
                 setNotifications(response.data.data);
             } else {
@@ -38,7 +38,7 @@ const NotificationBell = () => {
     const handleMarkAsRead = async (id) => {
         try {
             setError(null);
-            const response = await api.put(`/notifications/${id}/read`);
+            const response = await notificationAPI.markAsRead(id);
             if (response.data.success) {
                 // Update local state to remove the read notification
                 setNotifications(prevNotifications => 

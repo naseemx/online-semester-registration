@@ -3,8 +3,15 @@ const Notification = require('../models/Notification');
 // Get notifications
 const getNotifications = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
         const { status } = req.query;
-        let query = {};
+        let query = { user: req.user._id };
 
         // Filter by read status
         if (status === 'read') {
@@ -13,32 +20,8 @@ const getNotifications = async (req, res) => {
             query.read = false;
         }
 
-        // Filter notifications based on user role
-        if (req.user.role !== 'admin') {
-            const roleMap = {
-                'student': 'students',
-                'staff': 'staff',
-                'tutor': 'tutors',
-                'admin': 'admins'
-            };
-
-            const userRole = roleMap[req.user.role];
-            if (!userRole) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid user role'
-                });
-            }
-
-            query.$or = [
-                { recipients: 'all' },
-                { recipients: userRole }
-            ];
-        }
-
         const notifications = await Notification.find(query)
-            .sort({ createdAt: -1 })
-            .populate('createdBy', 'username');
+            .sort({ createdAt: -1 });
 
         res.json({
             success: true,
@@ -56,23 +39,22 @@ const getNotifications = async (req, res) => {
 // Send notification
 const sendNotification = async (req, res) => {
     try {
-        const { title, message, type, recipients } = req.body;
+        const { userId, title, message, type = 'info', link } = req.body;
 
-        // Validate recipients
-        const validRecipients = ['all', 'students', 'staff', 'tutors', 'admins'];
-        if (!validRecipients.includes(recipients)) {
+        if (!userId || !title || !message) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid recipients value'
+                message: 'Missing required fields'
             });
         }
 
         const notification = new Notification({
+            user: userId,
             title,
             message,
             type,
-            recipients,
-            createdBy: req.user.id // Changed from req.session.user.id to req.user.id
+            link,
+            read: false
         });
 
         await notification.save();
@@ -90,10 +72,54 @@ const sendNotification = async (req, res) => {
     }
 };
 
-// Mark notification as read
+// Get unread notifications for the current user
+const getUnreadNotifications = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
+        const notifications = await Notification.find({
+            user: req.user._id,
+            read: false
+        })
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+        res.json({
+            success: true,
+            data: notifications
+        });
+    } catch (error) {
+        console.error('Error fetching unread notifications:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error fetching notifications'
+        });
+    }
+};
+
+// Mark a notification as read
 const markAsRead = async (req, res) => {
     try {
-        const notification = await Notification.findById(req.params.id);
+        const { id } = req.params;
+        
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
+        const notification = await Notification.findOneAndUpdate(
+            { _id: id, user: req.user._id },
+            { read: true },
+            { new: true }
+        );
+
         if (!notification) {
             return res.status(404).json({
                 success: false,
@@ -101,36 +127,15 @@ const markAsRead = async (req, res) => {
             });
         }
 
-        // Check if the user has permission to read this notification
-        if (req.user.role !== 'admin') {
-            const roleMap = {
-                'student': 'students',
-                'staff': 'staff',
-                'tutor': 'tutors',
-                'admin': 'admins'
-            };
-
-            const userRole = roleMap[req.user.role];
-            if (notification.recipients !== 'all' && notification.recipients !== userRole) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Not authorized to access this notification'
-                });
-            }
-        }
-
-        notification.read = true;
-        await notification.save();
-
         res.json({
             success: true,
             data: notification
         });
     } catch (error) {
-        console.error('Mark notification error:', error);
+        console.error('Error marking notification as read:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating notification'
+            message: error.message || 'Error marking notification as read'
         });
     }
 };
@@ -138,7 +143,18 @@ const markAsRead = async (req, res) => {
 // Delete notification
 const deleteNotification = async (req, res) => {
     try {
-        const notification = await Notification.findById(req.params.id);
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
+        const notification = await Notification.findOne({
+            _id: req.params.id,
+            user: req.user._id
+        });
+
         if (!notification) {
             return res.status(404).json({
                 success: false,
@@ -146,15 +162,7 @@ const deleteNotification = async (req, res) => {
             });
         }
 
-        // Only allow admins or the creator to delete notifications
-        if (req.user.role !== 'admin' && notification.createdBy.toString() !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to delete this notification'
-            });
-        }
-
-        await Notification.deleteOne({ _id: req.params.id });
+        await notification.deleteOne();
 
         res.json({
             success: true,
@@ -172,6 +180,7 @@ const deleteNotification = async (req, res) => {
 module.exports = {
     getNotifications,
     sendNotification,
+    getUnreadNotifications,
     markAsRead,
     deleteNotification
 }; 

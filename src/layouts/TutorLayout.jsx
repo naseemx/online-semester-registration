@@ -14,7 +14,7 @@ const TutorLayout = ({ children }) => {
                 <nav className={styles.nav}>
                     <Link to="/tutor/registrations" className={styles.navItem}>
                         <FaGraduationCap />
-                        <span>Registrations</span>
+                        <span>Student Details</span>
                     </Link>
                     <Link to="/tutor/semester-registration" className={styles.navItem}>
                         <FaCalendarAlt />

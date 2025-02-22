@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { isAuthenticated, hasRole } = require('../middleware/auth');
-const { getRegistrations, sendStatusEmail, generateReport } = require('../controllers/tutorController');
+const { getRegistrations, sendStatusEmail, generateReport, approveRegistration } = require('../controllers/tutorController');
 const { 
     getRegistrations: getSemesterRegistrations,
     createRegistration,
@@ -15,6 +15,7 @@ const { getTutorAssignments, createTestAssignment } = require('../controllers/tu
 // Student registration routes
 router.get('/registrations', isAuthenticated, hasRole(['tutor']), getRegistrations);
 router.post('/registrations/:studentId/send-status', isAuthenticated, hasRole(['tutor']), sendStatusEmail);
+router.post('/registrations/:studentId/approve', isAuthenticated, hasRole(['tutor']), approveRegistration);
 
 // Report routes
 router.get('/reports/:type', isAuthenticated, hasRole(['tutor']), generateReport);

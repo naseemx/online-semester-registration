@@ -27,17 +27,29 @@ const Logs = () => {
         try {
             setLoading(true);
             setError('');
-            const response = await adminAPI.getLogs({
+            const response = await adminAPI.getSystemLogs({
                 search: searchTerm,
                 type: logType,
                 startDate: startDate,
                 endDate: endDate
             });
-            setLogs(response.data.data.logs);
-            setPagination(response.data.data.pagination);
+            
+            // Ensure we have an array of logs
+            const logsData = response.data?.data?.logs || response.data?.data || [];
+            const paginationData = response.data?.data?.pagination || { total: 0, pages: 1 };
+            
+            if (!Array.isArray(logsData)) {
+                console.error('Logs data is not an array:', logsData);
+                setLogs([]);
+            } else {
+                setLogs(logsData);
+            }
+            
+            setPagination(paginationData);
         } catch (err) {
+            console.error('Error fetching logs:', err);
             setError('Error fetching logs');
-            console.error(err);
+            setLogs([]); // Set empty array on error
         } finally {
             setLoading(false);
         }
@@ -200,7 +212,7 @@ const Logs = () => {
                                     <FaSpinner className={styles['spin']} /> Loading...
                                 </td>
                             </tr>
-                        ) : logs.length === 0 ? (
+                        ) : !Array.isArray(logs) || logs.length === 0 ? (
                             <tr>
                                 <td colSpan="6" className={styles['no-logs']}>
                                     No logs found
@@ -208,7 +220,7 @@ const Logs = () => {
                             </tr>
                         ) : (
                             logs.map((log) => (
-                                <tr key={log._id} className={styles['log-row']}>
+                                <tr key={log._id || Math.random()} className={styles['log-row']}>
                                     <td>{new Date(log.timestamp).toLocaleString()}</td>
                                     <td>
                                         <span className={styles[`badge-${getBadgeColor(log.type)}`]}>
