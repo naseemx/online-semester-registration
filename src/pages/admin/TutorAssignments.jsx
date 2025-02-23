@@ -1,28 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Card, Table, Button, Select, Tag, Space, Modal, 
-    Form, Input, Typography, Divider, message, Tooltip
-} from 'antd';
 import {
-    PlusOutlined, EditOutlined, DeleteOutlined,
-    UserOutlined, BookOutlined, NumberOutlined
-} from '@ant-design/icons';
+    Box,
+    Paper,
+    Typography,
+    Button,
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Chip,
+    Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TablePagination,
+    useTheme,
+    Tooltip,
+    Alert,
+    CircularProgress
+} from '@mui/material';
+import {
+    Add as AddIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Person as PersonIcon,
+    School as SchoolIcon,
+    Numbers as NumbersIcon
+} from '@mui/icons-material';
 import { adminAPI } from '../../utils/api';
-import styles from './TutorAssignments.module.css';
-
-const { Title, Text } = Typography;
-const { Option } = Select;
+import { toast } from 'react-toastify';
 
 const DEPARTMENTS = ['CSE', 'ECE', 'CE', 'ME', 'SFE', 'CSCS', 'CSBS', 'AI&DS'];
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const TutorAssignments = () => {
+    const theme = useTheme();
     const [assignments, setAssignments] = useState([]);
     const [tutors, setTutors] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [modalVisible, setModalVisible] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
     const [editingAssignment, setEditingAssignment] = useState(null);
-    const [form] = Form.useForm();
+    const [formData, setFormData] = useState({
+        tutorId: '',
+        assignments: [{ department: '', semester: '' }]
+    });
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
         fetchData();
@@ -45,7 +77,7 @@ const TutorAssignments = () => {
             }
         } catch (error) {
             console.error('Error fetching data:', error);
-            message.error('Failed to fetch data');
+            toast.error('Failed to fetch data');
         } finally {
             setLoading(false);
         }
@@ -53,268 +85,278 @@ const TutorAssignments = () => {
 
     const handleEdit = (assignment) => {
         setEditingAssignment(assignment);
-        form.setFieldsValue({
+        setFormData({
             tutorId: assignment.tutor._id,
             assignments: assignment.assignments.map(a => ({
                 department: a.department,
                 semester: a.semester
             }))
         });
-        setModalVisible(true);
+        setDialogOpen(true);
     };
 
     const handleDelete = async (assignmentId) => {
+        if (!window.confirm('Are you sure you want to delete this assignment?')) return;
+        
         try {
             const response = await adminAPI.deleteTutorAssignment(assignmentId);
             if (response.data?.success) {
-                message.success('Assignment deleted successfully');
+                toast.success('Assignment deleted successfully');
                 setAssignments(prev => prev.filter(a => a._id !== assignmentId));
             }
         } catch (error) {
             console.error('Error deleting assignment:', error);
-            message.error('Failed to delete assignment');
+            toast.error('Failed to delete assignment');
         }
     };
 
-    const handleSubmit = async (values) => {
+    const handleSubmit = async () => {
         try {
             let response;
             if (editingAssignment) {
-                response = await adminAPI.updateTutorAssignment(editingAssignment._id, values);
+                response = await adminAPI.updateTutorAssignment(editingAssignment._id, formData);
             } else {
-                response = await adminAPI.createTutorAssignment(values);
+                response = await adminAPI.createTutorAssignment(formData);
             }
 
             if (response.data?.success) {
-                message.success(`Assignment ${editingAssignment ? 'updated' : 'created'} successfully`);
+                toast.success(`Assignment ${editingAssignment ? 'updated' : 'created'} successfully`);
                 fetchData();
-                setModalVisible(false);
-                form.resetFields();
-                setEditingAssignment(null);
+                handleCloseDialog();
             }
         } catch (error) {
             console.error('Error saving assignment:', error);
             if (error.response?.data?.message?.includes('already assigned')) {
-                message.error('Some department-semester combinations are already assigned to another tutor');
+                toast.error('Some department-semester combinations are already assigned to another tutor');
             } else {
-                message.error('Failed to save assignment');
+                toast.error('Failed to save assignment');
             }
         }
     };
 
-    const columns = [
-        {
-            title: 'Tutor',
-            dataIndex: ['tutor', 'username'],
-            key: 'tutor',
-            render: (text, record) => (
-                <Space>
-                    <UserOutlined />
-                    <span>{text}</span>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                        ({record.tutor.email})
-                    </Text>
-                </Space>
+    const handleCloseDialog = () => {
+        setDialogOpen(false);
+        setEditingAssignment(null);
+        setFormData({
+            tutorId: '',
+            assignments: [{ department: '', semester: '' }]
+        });
+    };
+
+    const addAssignment = () => {
+        setFormData(prev => ({
+            ...prev,
+            assignments: [...prev.assignments, { department: '', semester: '' }]
+        }));
+    };
+
+    const removeAssignment = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            assignments: prev.assignments.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleAssignmentChange = (index, field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            assignments: prev.assignments.map((a, i) => 
+                i === index ? { ...a, [field]: value } : a
             )
-        },
-        {
-            title: 'Assignments',
-            dataIndex: 'assignments',
-            key: 'assignments',
-            render: (assignments) => (
-                <Space wrap>
-                    {assignments.map((a, index) => (
-                        <Tag 
-                            key={index} 
-                            color="blue"
-                            style={{ padding: '4px 8px', borderRadius: '4px' }}
-                        >
-                            <Space>
-                                <BookOutlined />
-                                {a.department}
-                                <Divider type="vertical" />
-                                <NumberOutlined />
-                                Sem {a.semester}
-                            </Space>
-                        </Tag>
-                    ))}
-                </Space>
-            )
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            width: 150,
-            render: (_, record) => (
-                <Space>
-                    <Tooltip title="Edit Assignment">
-                        <Button
-                            type="primary"
-                            icon={<EditOutlined />}
-                            onClick={() => handleEdit(record)}
-                            ghost
-                        />
-                    </Tooltip>
-                    <Tooltip title="Delete Assignment">
-                        <Button
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => Modal.confirm({
-                                title: 'Delete Assignment',
-                                content: 'Are you sure you want to delete this assignment?',
-                                okText: 'Yes',
-                                cancelText: 'No',
-                                onOk: () => handleDelete(record._id)
-                            })}
-                        />
-                    </Tooltip>
-                </Space>
-            )
-        }
-    ];
+        }));
+    };
 
     return (
-        <div className={styles.container}>
-            <Card>
-                <div className={styles.header}>
-                    <Title level={2}>Tutor Assignments</Title>
+        <Box sx={{ p: 3, minHeight: '100vh' }}>
+            <Paper 
+                elevation={2} 
+                sx={{ 
+                    p: 3,
+                    bgcolor: theme.palette.background.paper,
+                    color: theme.palette.text.primary
+                }}
+            >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Typography variant="h5" component="h1">
+                        Tutor Assignments
+                    </Typography>
                     <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                            setEditingAssignment(null);
-                            form.resetFields();
-                            setModalVisible(true);
-                        }}
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setDialogOpen(true)}
                     >
                         New Assignment
                     </Button>
-                </div>
+                </Box>
 
-                <Table
-                    columns={columns}
-                    dataSource={assignments}
-                    rowKey="_id"
-                    loading={loading}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showTotal: (total) => `Total ${total} assignments`
-                    }}
-                />
-            </Card>
-
-            <Modal
-                title={editingAssignment ? 'Edit Assignment' : 'New Assignment'}
-                open={modalVisible}
-                onCancel={() => {
-                    setModalVisible(false);
-                    setEditingAssignment(null);
-                    form.resetFields();
-                }}
-                footer={null}
-                width={800}
-            >
-                <Form
-                    form={form}
-                    onFinish={handleSubmit}
-                    layout="vertical"
-                >
-                    <Form.Item
-                        name="tutorId"
-                        label="Select Tutor"
-                        rules={[{ required: true, message: 'Please select a tutor' }]}
-                    >
-                        <Select
-                            placeholder="Choose a tutor"
-                            disabled={!!editingAssignment}
-                            showSearch
-                            optionFilterProp="children"
-                        >
-                            {tutors.map(tutor => (
-                                <Option key={tutor._id} value={tutor._id}>
-                                    {tutor.username} ({tutor.email})
-                                </Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    <Form.List
-                        name="assignments"
-                        rules={[
-                            {
-                                validator: async (_, assignments) => {
-                                    if (!assignments || assignments.length === 0) {
-                                        return Promise.reject(new Error('Please add at least one assignment'));
-                                    }
-                                }
-                            }
-                        ]}
-                    >
-                        {(fields, { add, remove }, { errors }) => (
-                            <>
-                                {fields.map(({ key, name, ...restField }) => (
-                                    <Space key={key} align="baseline">
-                                        <Form.Item
-                                            {...restField}
-                                            name={[name, 'department']}
-                                            rules={[{ required: true, message: 'Missing department' }]}
-                                        >
-                                            <Select placeholder="Department" style={{ width: 120 }}>
-                                                {DEPARTMENTS.map(dept => (
-                                                    <Option key={dept} value={dept}>{dept}</Option>
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <TableContainer>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Tutor</TableCell>
+                                    <TableCell>Assignments</TableCell>
+                                    <TableCell align="right">Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {assignments
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((assignment) => (
+                                    <TableRow key={assignment._id}>
+                                        <TableCell>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <PersonIcon />
+                                                <Box>
+                                                    <Typography>{assignment.tutor.username}</Typography>
+                                                    <Typography variant="caption" color="textSecondary">
+                                                        {assignment.tutor.email}
+                                                    </Typography>
+                                                </Box>
+                                            </Stack>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                                {assignment.assignments.map((a, index) => (
+                                                    <Chip
+                                                        key={index}
+                                                        label={`${a.department} - Sem ${a.semester}`}
+                                                        color="primary"
+                                                        variant="outlined"
+                                                        icon={<SchoolIcon />}
+                                                    />
                                                 ))}
-                                            </Select>
-                                        </Form.Item>
-                                        <Form.Item
-                                            {...restField}
-                                            name={[name, 'semester']}
-                                            rules={[{ required: true, message: 'Missing semester' }]}
-                                        >
-                                            <Select placeholder="Semester" style={{ width: 120 }}>
-                                                {SEMESTERS.map(sem => (
-                                                    <Option key={sem} value={sem}>Semester {sem}</Option>
-                                                ))}
-                                            </Select>
-                                        </Form.Item>
-                                        <Button type="text" danger onClick={() => remove(name)}>
-                                            <DeleteOutlined />
-                                        </Button>
-                                    </Space>
+                                            </Stack>
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            <Tooltip title="Edit">
+                                                <IconButton 
+                                                    onClick={() => handleEdit(assignment)}
+                                                    color="primary"
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Delete">
+                                                <IconButton
+                                                    onClick={() => handleDelete(assignment._id)}
+                                                    color="error"
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                                <Form.Item>
-                                    <Button
-                                        type="dashed"
-                                        onClick={() => add()}
-                                        icon={<PlusOutlined />}
-                                        style={{ width: '100%' }}
-                                    >
-                                        Add Department-Semester Combination
-                                    </Button>
-                                    <Form.ErrorList errors={errors} />
-                                </Form.Item>
-                            </>
-                        )}
-                    </Form.List>
+                            </TableBody>
+                        </Table>
+                        <TablePagination
+                            component="div"
+                            count={assignments.length}
+                            page={page}
+                            onPageChange={(e, newPage) => setPage(newPage)}
+                            rowsPerPage={rowsPerPage}
+                            onRowsPerPageChange={(e) => {
+                                setRowsPerPage(parseInt(e.target.value, 10));
+                                setPage(0);
+                            }}
+                        />
+                    </TableContainer>
+                )}
+            </Paper>
 
-                    <Form.Item>
-                        <Space>
-                            <Button type="primary" htmlType="submit">
-                                {editingAssignment ? 'Update' : 'Create'} Assignment
-                            </Button>
-                            <Button onClick={() => {
-                                setModalVisible(false);
-                                setEditingAssignment(null);
-                                form.resetFields();
-                            }}>
-                                Cancel
-                            </Button>
-                        </Space>
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </div>
+            <Dialog 
+                open={dialogOpen} 
+                onClose={handleCloseDialog}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    {editingAssignment ? 'Edit Assignment' : 'New Assignment'}
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ pt: 2 }}>
+                        <FormControl fullWidth sx={{ mb: 3 }}>
+                            <InputLabel>Select Tutor</InputLabel>
+                            <Select
+                                value={formData.tutorId}
+                                onChange={(e) => setFormData(prev => ({ ...prev, tutorId: e.target.value }))}
+                                disabled={!!editingAssignment}
+                                label="Select Tutor"
+                            >
+                                {tutors.map(tutor => (
+                                    <MenuItem key={tutor._id} value={tutor._id}>
+                                        {tutor.username} ({tutor.email})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        {formData.assignments.map((assignment, index) => (
+                            <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                                <FormControl sx={{ flex: 1 }}>
+                                    <InputLabel>Department</InputLabel>
+                                    <Select
+                                        value={assignment.department}
+                                        onChange={(e) => handleAssignmentChange(index, 'department', e.target.value)}
+                                        label="Department"
+                                    >
+                                        {DEPARTMENTS.map(dept => (
+                                            <MenuItem key={dept} value={dept}>{dept}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl sx={{ flex: 1 }}>
+                                    <InputLabel>Semester</InputLabel>
+                                    <Select
+                                        value={assignment.semester}
+                                        onChange={(e) => handleAssignmentChange(index, 'semester', e.target.value)}
+                                        label="Semester"
+                                    >
+                                        {SEMESTERS.map(sem => (
+                                            <MenuItem key={sem} value={sem}>Semester {sem}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                {formData.assignments.length > 1 && (
+                                    <IconButton 
+                                        onClick={() => removeAssignment(index)}
+                                        color="error"
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                )}
+                            </Box>
+                        ))}
+
+                        <Button
+                            variant="outlined"
+                            startIcon={<AddIcon />}
+                            onClick={addAssignment}
+                            fullWidth
+                            sx={{ mt: 2 }}
+                        >
+                            Add Department-Semester Combination
+                        </Button>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                    <Button 
+                        variant="contained" 
+                        onClick={handleSubmit}
+                        disabled={!formData.tutorId || formData.assignments.some(a => !a.department || !a.semester)}
+                    >
+                        {editingAssignment ? 'Update' : 'Create'} Assignment
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
     );
 };
 
-export default TutorAssignments;
+export default TutorAssignments; 

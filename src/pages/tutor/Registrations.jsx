@@ -212,27 +212,27 @@ const Registrations = () => {
             key: 'actions',
             render: (_, record) => (
                 <Space size="small">
-                    <Button
+                        <Button
                         className={styles.actionButton}
-                        icon={<MailOutlined />}
-                        loading={actionLoading[record._id]}
-                        onClick={() => handleSendStatus(record._id)}
-                        title="Send Status Email"
-                    >
-                        Send Status
-                    </Button>
-                    <Button
-                        type="primary"
+                            icon={<MailOutlined />}
+                            loading={actionLoading[record._id]}
+                            onClick={() => handleSendStatus(record._id)}
+                            title="Send Status Email"
+                        >
+                            Send Status
+                        </Button>
+                            <Button
+                                type="primary"
                         className={styles.actionButton}
-                        icon={<CheckCircleOutlined />}
-                        loading={actionLoading[record._id]}
-                        onClick={() => handleApprove(record._id)}
+                                icon={<CheckCircleOutlined />}
+                                loading={actionLoading[record._id]}
+                                onClick={() => handleApprove(record._id)}
                         disabled={record.registrationDetails?.status !== 'submitted'}
-                        title="Approve Registration"
-                    >
-                        Approve
-                    </Button>
-                </Space>
+                                title="Approve Registration"
+                            >
+                                Approve
+                            </Button>
+                    </Space>
             )
         }
     ];
@@ -301,35 +301,35 @@ const Registrations = () => {
 
             <Card className={styles.filterSection}>
                 <Space wrap>
-                    <Search
-                        placeholder="Search by name or admission number"
-                        allowClear
-                        onChange={e => setSearchText(e.target.value)}
+                <Search
+                    placeholder="Search by name or admission number"
+                    allowClear
+                    onChange={e => setSearchText(e.target.value)}
                         className={styles.searchInput}
                         prefix={<SearchOutlined />}
-                    />
-                    <Select
+                />
+                <Select
                         placeholder="Select Department"
-                        value={selectedDepartment}
-                        onChange={setSelectedDepartment}
+                    value={selectedDepartment}
+                    onChange={setSelectedDepartment}
                         className={styles.select}
-                    >
-                        <Option value="all">All Departments</Option>
+                >
+                    <Option value="all">All Departments</Option>
                         {departments.map(dept => (
                             <Option key={dept} value={dept}>{dept}</Option>
-                        ))}
-                    </Select>
-                    <Select
+                    ))}
+                </Select>
+                <Select
                         placeholder="Select Semester"
-                        value={selectedSemester}
-                        onChange={setSelectedSemester}
+                    value={selectedSemester}
+                    onChange={setSelectedSemester}
                         className={styles.select}
-                    >
-                        <Option value="all">All Semesters</Option>
+                >
+                    <Option value="all">All Semesters</Option>
                         {semesters.map(sem => (
                             <Option key={sem} value={sem.toString()}>Semester {sem}</Option>
-                        ))}
-                    </Select>
+                    ))}
+                </Select>
                 </Space>
             </Card>
 
@@ -340,7 +340,7 @@ const Registrations = () => {
                     loading={loading}
                     rowKey="_id"
                     className={styles.table}
-                    pagination={{
+                    pagination={{ 
                         pageSize: 10,
                         showSizeChanger: true,
                         showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} students`
