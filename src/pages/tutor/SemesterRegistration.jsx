@@ -28,6 +28,7 @@ const SemesterRegistration = () => {
     });
     const [statistics, setStatistics] = useState({});
     const [sendingReminders, setSendingReminders] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -132,10 +133,23 @@ const SemesterRegistration = () => {
 
     const handleCreateSubmit = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
             // Validate form data
             if (!formData.department || !formData.semester || !formData.deadline) {
                 throw new Error('Please fill in all required fields');
+            }
+
+            // Check if a registration with the same department and semester already exists in the current state
+            const existingRegistration = registrations.find(reg => 
+                reg.department === formData.department && 
+                reg.semester === parseInt(formData.semester, 10) &&
+                reg.status === 'active'
+            );
+
+            if (existingRegistration) {
+                toast.error('An active registration already exists for this department and semester');
+                return;
             }
 
             // Format data for submission
@@ -151,13 +165,30 @@ const SemesterRegistration = () => {
             if (response.data.success) {
                 toast.success('New semester registration created successfully!');
                 setShowCreateForm(false);
-                fetchRegistrations();
+                // Reset form data
+                setFormData({
+                    department: '',
+                    semester: '',
+                    deadline: new Date().toISOString().split('T')[0]
+                });
+                // Fetch updated registrations
+                await fetchRegistrations();
+            } else {
+                throw new Error(response.data.message || 'Failed to create registration');
             }
         } catch (error) {
             console.error('Create registration error:', error);
             const errorMessage = error.response?.data?.message || error.message || 'Failed to create registration';
             console.log('Error message:', errorMessage);
+            
+            if (errorMessage.includes('already exists')) {
+                // If it's a duplicate registration error, refresh the list to show the latest state
+                await fetchRegistrations();
+            }
+            
             toast.error(errorMessage);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -171,7 +202,18 @@ const SemesterRegistration = () => {
                 }
             } catch (error) {
                 console.error('Delete registration error:', error);
-                toast.error('Failed to delete registration');
+                const errorMessage = error.response?.data?.message || 
+                                   error.message || 
+                                   'Failed to delete registration';
+                
+                // Check for specific error cases
+                if (errorMessage.includes('submitted or approved students')) {
+                    toast.error('Cannot delete registration with submitted or approved students');
+                } else if (errorMessage.includes('not found')) {
+                    toast.error('Registration not found');
+                } else {
+                    toast.error(errorMessage);
+                }
             }
         }
     };
@@ -441,8 +483,12 @@ const SemesterRegistration = () => {
                             >
                                 Cancel
                             </button>
-                            <button type="submit" className={styles.submitButton}>
-                                Create Registration
+                            <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <><FaSpinner className={styles.spinner} /> Loading...</>
+                                ) : (
+                                    'Create Registration'
+                                )}
                             </button>
                         </div>
                     </form>

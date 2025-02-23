@@ -3,6 +3,7 @@ const Student = require('../models/Student');
 const TutorAssignment = require('../models/TutorAssignment');
 const Notification = require('../models/Notification');
 const { sendEmail } = require('../utils/email');
+const mongoose = require('mongoose');
 
 // Get all registrations for a tutor
 const getRegistrations = async (req, res) => {
@@ -48,6 +49,10 @@ const getRegistrations = async (req, res) => {
 
 // Create new semester registration
 const createRegistration = async (req, res) => {
+    // Start a transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { department, semester, deadline } = req.body;
         console.log('Creating new registration:', { department, semester, deadline });
@@ -61,7 +66,29 @@ const createRegistration = async (req, res) => {
             });
         }
 
-        // Check if tutor is assigned to this department and semester
+        // Check for existing active registration with transaction
+        const existingRegistration = await SemesterRegistration.findOne({
+            department: { $regex: new RegExp(`^${department}$`, 'i') },
+            semester: parseInt(semester),
+            status: 'active',
+            createdBy: req.user._id
+        }).session(session);
+
+        if (existingRegistration) {
+            await session.abortTransaction();
+            session.endSession();
+            console.log('Active registration already exists:', {
+                id: existingRegistration._id,
+                department: existingRegistration.department,
+                semester: existingRegistration.semester
+            });
+            return res.status(400).json({
+                success: false,
+                message: 'An active registration already exists for this department and semester'
+            });
+        }
+
+        // Check tutor assignment with transaction
         const tutorAssignment = await TutorAssignment.findOne({
             tutor: req.user._id,
             assignments: { 
@@ -70,45 +97,33 @@ const createRegistration = async (req, res) => {
                     semester: parseInt(semester)
                 } 
             }
-        });
-
-        console.log('Found tutor assignment:', tutorAssignment);
+        }).session(session);
 
         if (!tutorAssignment) {
-            console.log('Tutor not assigned to:', { department, semester });
+            await session.abortTransaction();
+            session.endSession();
             return res.status(403).json({
                 success: false,
                 message: 'You are not assigned to this department and semester'
             });
         }
 
-        // Find all active students in this department and semester
+        // Find students with transaction
         const students = await Student.find({ 
             department, 
             semester: parseInt(semester)
-        });
+        }).session(session);
 
-        console.log('Found students:', {
-            count: students.length,
-            studentIds: students.map(s => s._id),
-            details: students.map(s => ({
-                id: s._id,
-                name: s.name,
-                department: s.department,
-                semester: s.semester
-            }))
-        });
-
-        // Check if there are any students
         if (students.length === 0) {
-            console.log('No students found for:', { department, semester });
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({
                 success: false,
                 message: 'No students found in this department and semester'
             });
         }
 
-        // Create new registration
+        // Create registration with transaction
         const registration = new SemesterRegistration({
             department,
             semester: parseInt(semester),
@@ -121,30 +136,25 @@ const createRegistration = async (req, res) => {
             }))
         });
 
-        console.log('Created registration object:', {
-            id: registration._id,
-            department: registration.department,
-            semester: registration.semester,
-            studentCount: registration.students.length,
-            students: registration.students.map(s => ({
-                studentId: s.student,
-                status: s.status
-            }))
-        });
+        await registration.save({ session });
 
-        await registration.save();
-        console.log('Registration saved successfully');
+        // Create notifications with transaction
+        const notifications = students.map(student => ({
+            recipient: student._id,
+            title: `New Registration Created`,
+            message: `A new semester registration has been created for ${department} - Semester ${semester}. Deadline: ${new Date(deadline).toLocaleDateString()}`,
+            type: 'info',
+            user: req.user._id
+        }));
 
-        // Send notifications to students
+        await Notification.insertMany(notifications, { session });
+
+        // Commit transaction
+        await session.commitTransaction();
+        session.endSession();
+
+        // Send emails after successful transaction (don't include in transaction)
         for (const student of students) {
-            const notification = new Notification({
-                recipient: student._id,
-                message: `A new semester registration has been created for ${department} - Semester ${semester}. Deadline: ${new Date(deadline).toLocaleDateString()}`,
-                type: 'info'
-            });
-
-            await notification.save();
-
             try {
                 await sendEmail({
                     email: student.email,
@@ -152,31 +162,21 @@ const createRegistration = async (req, res) => {
                     message: `
 Dear ${student.name},
 
-We hope this email finds you well. A new semester registration has been initiated for:
+A new semester registration has been created for:
 
 Department: ${department}
 Semester: ${semester}
 Deadline: ${new Date(deadline).toLocaleDateString()}
 
-Important Instructions:
-1. Log in to the SR System portal
-2. Navigate to the Registration section
-3. Complete all required verifications (Library, Lab, and Office)
-4. Ensure all pending fines are cleared
-5. Submit your registration before the deadline
-
-Please note that failure to complete the registration before the deadline may result in late registration fees or other academic consequences.
-
-If you encounter any issues during the registration process, please contact your department coordinator or the academic office for assistance.
+Please log in to the SR System to complete your registration.
 
 Best regards,
 Academic Affairs Office
-SR System
                     `
                 });
             } catch (emailError) {
                 console.error('Error sending email to student:', emailError);
-                // Continue with the process even if email fails
+                // Continue even if email fails
             }
         }
 
@@ -185,7 +185,12 @@ SR System
             data: registration,
             message: 'Semester registration created successfully'
         });
+
     } catch (error) {
+        // Rollback transaction on error
+        await session.abortTransaction();
+        session.endSession();
+        
         console.error('Create registration error:', error);
         res.status(500).json({
             success: false,
@@ -402,31 +407,66 @@ const deleteRegistration = async (req, res) => {
     try {
         const { id } = req.params;
 
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            console.log('Invalid registration ID:', id);
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid registration ID'
+            });
+        }
+
+        // Find registration with populated student data
         const registration = await SemesterRegistration.findOne({
             _id: id,
             createdBy: req.user._id
-        }).populate('students.student', '_id');
+        }).populate('students.student', '_id name email');
 
         if (!registration) {
+            console.log('Registration not found for deletion:', id);
             return res.status(404).json({
                 success: false,
                 message: 'Registration not found'
             });
         }
 
-        // Create notification for each student
-        for (const { student } of registration.students) {
-            const notification = new Notification({
+        // Check if any students have already submitted or been approved
+        const hasSubmittedStudents = registration.students.some(
+            student => ['submitted', 'approved'].includes(student.status)
+        );
+
+        if (hasSubmittedStudents) {
+            console.log('Cannot delete registration with submitted or approved students:', {
+                id: registration._id,
+                department: registration.department,
+                semester: registration.semester
+            });
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete registration with submitted or approved students'
+            });
+        }
+
+        // Create notifications for students
+        const notifications = registration.students
+            .filter(({ student }) => student && student._id)
+            .map(({ student }) => ({
                 recipient: student._id,
                 message: `The semester registration for ${registration.department} - Semester ${registration.semester} has been deleted.`,
                 type: 'warning'
-            });
+            }));
 
-            await notification.save();
+        if (notifications.length > 0) {
+            try {
+                await Notification.insertMany(notifications);
+            } catch (notificationError) {
+                console.error('Error creating notifications:', notificationError);
+                // Continue with deletion even if notifications fail
+            }
         }
 
         // Delete the registration
         await SemesterRegistration.deleteOne({ _id: id });
+        console.log('Registration deleted successfully:', id);
 
         res.json({
             success: true,
@@ -436,7 +476,7 @@ const deleteRegistration = async (req, res) => {
         console.error('Delete registration error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error deleting registration'
+            message: error.message || 'Error deleting registration'
         });
     }
 };

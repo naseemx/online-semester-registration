@@ -25,6 +25,17 @@ A MERN stack application for managing semester registration for students with au
 - Node.js (v14 or higher)
 - MongoDB Community Server
 - Gmail account (for email notifications)
+- npm (Node Package Manager)
+
+## Requirements for Running the Project
+
+1. **Node.js**: Ensure you have Node.js installed. You can download it from [Node.js official website](https://nodejs.org/).
+2. **MongoDB**: Install MongoDB Community Server from [MongoDB official website](https://www.mongodb.com/try/download/community).
+3. **Gmail Account**: Create a Gmail account if you don't have one. You will need to enable "Less secure app access" or use an App Password for Nodemailer.
+4. **npm**: npm is included with Node.js, but ensure it's updated by running:
+   ```bash
+   npm install -g npm
+   ```
 
 ## Setup Instructions
 
@@ -75,8 +86,8 @@ A MERN stack application for managing semester registration for students with au
    ```
 
 6. **Access the application**
-   - Frontend: http://localhost:5173
-   - Backend: http://localhost:5000
+   - Frontend: [http://localhost:5173](http://localhost:5173)
+   - Backend: [http://localhost:5000](http://localhost:5000)
 
 ## Default Users
 
@@ -111,13 +122,13 @@ meme/
 │       └── index.js
 ├── server/                # Express backend
 │   ├── controllers/       # Logic for handling routes
-│   ├── models/           # Mongoose models
-│   ├── routes/           # Express route definitions
-│   ├── utils/            # Utility functions
-│   ├── config/           # Configuration files
-│   ├── app.js            # Main Express app
-│   └── server.js         # Server startup script
-└── README.md             # Project documentation
+│   ├── models/            # Mongoose models
+│   ├── routes/            # Express route definitions
+│   ├── utils/             # Utility functions
+│   ├── config/            # Configuration files
+│   ├── app.js             # Main Express app
+│   └── server.js          # Server startup script
+└── README.md              # Project documentation
 ```
 
 ## Technologies Used
