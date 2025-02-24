@@ -118,7 +118,7 @@ const Reports = () => {
             </header>
 
             <AnimatePresence>
-                {error && (
+                    {error && (
                     <motion.div 
                         className={styles.error}
                         initial={{ opacity: 0, y: -20 }}
@@ -140,7 +140,7 @@ const Reports = () => {
                         onDownload={handleDownload}
                     />
                 ))}
-            </div>
+                        </div>
 
             <div className={styles.infoSection}>
                 <h2 className={styles.infoTitle}>
@@ -151,7 +151,7 @@ const Reports = () => {
                     <div className={styles.infoCard}>
                         <h3>Completed Registrations Report</h3>
                         <p>Contains details of students who have successfully completed their semester registration, including verification statuses and registration date.</p>
-                    </div>
+                                </div>
                     <div className={styles.infoCard}>
                         <h3>Pending Registrations Report</h3>
                         <p>Lists students with incomplete registrations, including their current verification status and any pending requirements.</p>

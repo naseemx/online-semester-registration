@@ -301,17 +301,40 @@
     gap: 0.75rem;
     width: 100%;
     padding: 1rem;
-    background: var(--primary);
-    color: white;
-    border: none;
+    border: 2px solid transparent;
     border-radius: 8px;
-    cursor: pointer;
     font-weight: 500;
+    cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.updateButton:hover {
+/* Light mode button styles */
+:global(.light) .updateButton {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+}
+
+:global(.light) .updateButton:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* Dark mode button styles */
+:global(.dark) .updateButton {
+    background: var(--primary);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+:global(.dark) .updateButton:hover {
     background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
 }
 
 .noSelection {

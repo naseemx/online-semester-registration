@@ -92,16 +92,49 @@ const Registrations = () => {
     const handleApprove = async (studentId) => {
         try {
             setActionLoading(prev => ({ ...prev, [studentId]: true }));
-            const response = await tutorAPI.approveRegistration(studentId);
-            if (response.data?.success) {
-                toast.success('Registration approved successfully');
-                await fetchStudents();
-            } else {
-                throw new Error(response.data?.message || 'Failed to approve registration');
+            
+            // First approve the registration
+            const approveResponse = await tutorAPI.approveRegistration(studentId);
+            
+            if (!approveResponse.data?.success) {
+                throw new Error(approveResponse.data?.message || 'Failed to approve registration');
             }
+
+            // Wait a bit before fetching updated data to ensure server has processed the change
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Refresh the students list to get updated status
+            await fetchStudents();
+
+            // Only try to send email if approval was successful
+            try {
+                const emailResponse = await tutorAPI.sendStatusEmail(studentId);
+                
+                if (!emailResponse.data?.success) {
+                    console.warn('Email notification failed:', emailResponse.data?.message);
+                    toast.warning('Registration approved but email notification failed');
+                } else {
+                    toast.success('Registration approved and notification sent');
+                }
+            } catch (emailError) {
+                console.warn('Email sending failed:', emailError);
+                toast.warning('Registration approved but email notification failed');
+            }
+            
         } catch (error) {
             console.error('Approve error:', error);
-            toast.error(error.response?.data?.message || 'Failed to approve registration');
+            
+            // Handle specific error cases
+            if (error.response?.status === 400) {
+                toast.error('Invalid registration status or student not found');
+            } else if (error.response?.status === 500) {
+                toast.error('Server error occurred. Please try again later.');
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to approve registration');
+            }
+
+            // If error occurs, refresh list to ensure we have latest state
+            await fetchStudents();
         } finally {
             setActionLoading(prev => ({ ...prev, [studentId]: false }));
         }
