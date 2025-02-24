@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Registration from './pages/student/Registration';
 import Status from './pages/student/Status';
 import ManageFines from './pages/staff/ManageFines';
+import StudentFinesDashboard from './pages/staff/StudentFinesDashboard';
 import Registrations from './pages/tutor/Registrations';
 import Reports from './pages/tutor/Reports';
 import SemesterRegistration from './pages/tutor/SemesterRegistration';
@@ -84,11 +85,15 @@ const App = () => {
 
                                 {/* Staff routes */}
                                 <Route
-                                    path="/staff/fines"
+                                    path="/staff/*"
                                     element={
                                         <PrivateRoute roles={['staff']}>
                                             <StaffLayout>
-                                                <ManageFines />
+                                                <Routes>
+                                                    <Route path="dashboard" element={<StudentFinesDashboard />} />
+                                                    <Route path="fines" element={<ManageFines />} />
+                                                    <Route path="" element={<Navigate to="dashboard" replace />} />
+                                                </Routes>
                                             </StaffLayout>
                                         </PrivateRoute>
                                     }

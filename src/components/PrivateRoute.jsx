@@ -22,7 +22,7 @@ const PrivateRoute = ({ children, roles = [] }) => {
         // Redirect to appropriate dashboard based on role
         const roleRoutes = {
             student: '/student/registration',
-            staff: '/staff/fines',
+            staff: '/staff/dashboard',
             tutor: '/tutor/registrations',
             admin: '/admin/dashboard'
         };
