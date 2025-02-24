@@ -1,57 +1,63 @@
 .container {
     padding: 2rem;
-    min-height: calc(100vh - var(--header-height));
-    background-color: var(--bg-secondary);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.pageHeader {
+    margin-bottom: 2rem;
+}
+
+.pageHeader h1 {
+    font-size: 2rem;
+    font-weight: 600;
     color: var(--text-primary);
+    margin-bottom: 0.5rem;
 }
 
-.row {
-    display: flex;
+.pageHeader p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
     gap: 2rem;
-    flex-wrap: wrap;
-}
-
-.studentList {
-    flex: 1;
-    min-width: 300px;
-}
-
-.finesSection {
-    flex: 2;
-    min-width: 400px;
 }
 
 .card {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
 .cardHeader {
-    padding: 1rem;
+    padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);
-    background-color: #3b82f6;
-    border-radius: 8px 8px 0 0;
 }
 
-.headerTitle {
-    margin: 0;
+.cardHeader h2 {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: white;
-    font-size: 1.25rem;
+    gap: 0.75rem;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    margin: 0;
+    margin-bottom: 1rem;
+}
+
+.cardHeader h2 svg {
+    color: var(--primary);
 }
 
 .cardBody {
-    padding: 1rem;
+    padding: 1.5rem;
 }
 
 .searchContainer {
     position: relative;
-    margin-bottom: 1rem;
 }
 
 .searchIcon {
@@ -59,180 +65,284 @@
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #6b7280;
+    color: var(--text-secondary);
 }
 
 .searchInput {
     width: 100%;
     padding: 0.75rem 1rem 0.75rem 2.5rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    background-color: white;
-    color: #111827;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 .searchInput::placeholder {
-    color: #9ca3af;
-}
-
-.studentsList {
-    max-height: 500px;
-    overflow-y: auto;
+    color: var(--text-secondary);
 }
 
 .studentItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     padding: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: var(--background);
+    margin-bottom: 0.75rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    background-color: white;
+    border-left: 4px solid transparent;
 }
 
-.studentItem:hover {
-    background-color: #f3f4f6;
-    border-color: #3b82f6;
+.studentItem.cleared {
+    border-left-color: var(--success);
+}
+
+.studentItem.partial {
+    border-left-color: var(--warning);
+}
+
+.studentItem.unpaid {
+    border-left-color: var(--error);
+}
+
+.studentItem:last-child {
+    margin-bottom: 0;
 }
 
 .studentItem.active {
-    background-color: #eff6ff;
-    border-color: #3b82f6;
+    background: var(--primary-light);
+}
+
+.studentIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.studentInfo {
+    flex: 1;
 }
 
 .studentName {
-    margin: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #111827;
+    color: var(--text-primary);
     font-size: 1rem;
     font-weight: 500;
+    margin: 0;
+    margin-bottom: 0.25rem;
 }
 
 .admissionNumber {
-    margin: 0.25rem 0 0;
-    font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+    margin-bottom: 0.5rem;
 }
 
-.pendingBadge {
-    background-color: #ef4444;
-    color: white;
+.fineInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.amounts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.totalFine {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.pendingAmount {
+    color: var(--error);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.statusBadge {
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
     font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.statusBadge.cleared {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.statusBadge.partial {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+
+.statusBadge.unpaid {
+    background: var(--error-light);
+    color: var(--error);
+}
+
+.finesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .fineCard {
-    padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
+    background: var(--background);
+    border-radius: 8px;
+    padding: 1.25rem;
 }
 
-.fineCard:last-child {
-    border-bottom: none;
+.fineHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.fineIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fineLabel {
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .fineInputGroup {
     display: flex;
-    align-items: center;
     gap: 1rem;
 }
 
-.fineLabel {
+.amountWrapper {
+    position: relative;
     flex: 1;
-    color: #111827;
-    font-weight: 500;
 }
 
 .amountInput {
-    width: 120px;
-    padding: 0.5rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    background-color: white;
-    color: #111827;
-    text-align: right;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    padding-left: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.2s ease;
 }
 
 .amountInput:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.currencySymbol {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
 }
 
 .statusToggle {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
     border: none;
-    border-radius: 50%;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    background: none;
+    font-weight: 500;
+    min-width: 120px;
 }
 
 .statusToggle.paid {
-    color: #059669;
-}
-
-.statusToggle.paid:hover {
-    background-color: #ecfdf5;
+    background: var(--success-light);
+    color: var(--success);
 }
 
 .statusToggle.pending {
-    color: #dc2626;
-}
-
-.statusToggle.pending:hover {
-    background-color: #fef2f2;
+    background: var(--warning-light);
+    color: var(--warning);
 }
 
 .updateButton {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     width: 100%;
-    padding: 0.75rem;
-    background-color: #3b82f6;
+    padding: 1rem;
+    background: var(--primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
     font-weight: 500;
-    margin-top: 1rem;
+    transition: all 0.2s ease;
 }
 
 .updateButton:hover {
-    background-color: #2563eb;
-}
-
-.errorMessage {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    background-color: #fee2e2;
-    color: #991b1b;
-    border-radius: 4px;
-    animation: shake 0.5s ease;
-}
-
-.successMessage {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    background-color: #dcfce7;
-    color: #166534;
-    border-radius: 4px;
-    animation: fadeIn 0.3s ease;
+    background: var(--primary-hover);
 }
 
 .noSelection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
     text-align: center;
-    color: #6b7280;
-    margin: 2rem 0;
+    gap: 1rem;
+}
+
+.errorMessage,
+.successMessage {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.errorMessage {
+    background: var(--error-light);
+    color: var(--error);
+}
+
+.successMessage {
+    background: var(--success-light);
+    color: var(--success);
 }
 
 .loadingContainer {
@@ -240,126 +350,135 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: calc(100vh - var(--header-height));
-    color: #111827;
-}
-
-.spinner {
-    animation: spin 1s linear infinite;
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    color: #3b82f6;
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes shake {
-    0%, 100% {
-        transform: translateX(0);
-    }
-    10%, 30%, 50%, 70%, 90% {
-        transform: translateX(-5px);
-    }
-    20%, 40%, 60%, 80% {
-        transform: translateX(5px);
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* Scrollbar Styles */
-.studentsList::-webkit-scrollbar {
-    width: 8px;
-}
-
-.studentsList::-webkit-scrollbar-track {
-    background: #f3f4f6;
-}
-
-.studentsList::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 4px;
-}
-
-.studentsList::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-}
-
-/* Dark mode overrides */
-:global(.dark-mode) .card {
-    background-color: var(--bg-primary);
-}
-
-:global(.dark-mode) .searchInput,
-:global(.dark-mode) .amountInput {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-:global(.dark-mode) .studentItem {
-    background-color: var(--bg-primary);
-    border-color: var(--border-color);
-}
-
-:global(.dark-mode) .studentItem:hover {
-    background-color: var(--bg-hover);
-}
-
-:global(.dark-mode) .studentName {
+    min-height: 400px;
+    gap: 1rem;
     color: var(--text-primary);
 }
 
-:global(.dark-mode) .admissionNumber {
+.filterControls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.toggleContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.toggleContainer input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.noResults {
+    text-align: center;
+    padding: 2rem;
     color: var(--text-secondary);
 }
 
-:global(.dark-mode) .fineLabel {
-    color: var(--text-primary);
+/* Dark mode specific styles */
+:global(.dark) {
+    --card-bg: #1f2937;
+    --background: #111827;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-light: rgba(59, 130, 246, 0.1);
+    --success: #10b981;
+    --success-light: rgba(16, 185, 129, 0.1);
+    --error: #ef4444;
+    --error-light: rgba(239, 68, 68, 0.1);
+    --warning: #f59e0b;
+    --warning-light: rgba(245, 158, 11, 0.1);
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Light mode specific styles */
+:global(.light) {
+    --card-bg: #ffffff;
+    --background: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.1);
+    --success: #059669;
+    --success-light: rgba(5, 150, 105, 0.1);
+    --error: #dc2626;
+    --error-light: rgba(220, 38, 38, 0.1);
+    --warning: #d97706;
+    --warning-light: rgba(217, 119, 6, 0.1);
+    --border-color: rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+    .content {
+        grid-template-columns: 1fr;
+    }
+
+    .finesGrid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
     }
 
-    .row {
-        flex-direction: column;
+    .pageHeader h1 {
+        font-size: 1.5rem;
     }
 
-    .studentList,
-    .finesSection {
-        flex: none;
-        width: 100%;
+    .cardHeader {
+        padding: 1rem;
+    }
+
+    .cardBody {
+        padding: 1rem;
     }
 
     .fineInputGroup {
         flex-direction: column;
-        align-items: stretch;
-    }
-
-    .amountInput {
-        width: 100%;
     }
 
     .statusToggle {
         width: 100%;
-        height: 48px;
-        border-radius: 4px;
+    }
+
+    .filterControls {
+        gap: 0.75rem;
+    }
+
+    .fineInfo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .finesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .studentItem {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .fineInfo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 } 
