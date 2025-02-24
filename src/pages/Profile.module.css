@@ -1,185 +1,242 @@
-.profileContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f0f4f8;
-    transition: background-color 0.3s ease;
-}
-
-.profileCard {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    padding: 40px;
-    width: 90%;
-    max-width: 700px;
-    animation: fadeIn 0.5s;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .backButton {
-    background: #007bff;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 18px;
     display: flex;
     align-items: center;
-    margin-bottom: 30px;
-    padding: 12px 20px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 2rem;
+    transition: all 0.2s ease;
 }
 
 .backButton:hover {
-    background-color: #0056b3;
+    background: var(--background);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
-.profileHeader {
+.profileWrapper {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    min-height: calc(100vh - 200px);
+}
+
+.profileSidebar {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.userProfile {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-}
-
-.roleTag {
-    background-color: #007bff;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: bold;
-}
-
-.notification {
-    margin: 15px 0;
-    padding: 15px;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-}
-
-.notification.success {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.notification.error {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.formGroup {
-    margin-bottom: 25px;
-}
-
-.formGroup label {
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 16px;
-}
-
-.formGroup input {
-    width: 100%;
-    padding: 14px;
-    border: 1px solid #ced4da;
-    border-radius: 5px;
-    transition: border-color 0.3s;
-}
-
-.formGroup input:focus {
-    border-color: #007bff;
-    outline: none;
-}
-
-.submitButton {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 14px 25px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-size: 16px;
-}
-
-.submitButton:hover {
-    background-color: #0056b3;
+    text-align: center;
 }
 
 .avatar {
     width: 120px;
     height: 120px;
-    background-color: #007bff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    font-size: 3rem;
-    color: white;
-}
-
-.profileHeader h1 {
-    color: #343a40;
-    font-size: 1.75rem;
-    margin: 0;
-}
-
-.formGroup small {
-    display: block;
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.passwordSection {
-    margin: 2rem 0;
-    padding-top: 2rem;
-    border-top: 1px solid #ced4da;
-}
-
-.passwordSection h2 {
-    color: #343a40;
-    font-size: 1.75rem;
+    color: var(--primary);
     margin-bottom: 1.5rem;
-}
-
-.updateButton {
-    width: 100%;
-    padding: 1rem;
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.updateButton:hover {
-    background-color: var(--accent-hover);
+.avatar svg {
+    width: 100%;
+    height: 100%;
+}
+
+.userName {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    margin-bottom: 0.5rem;
+}
+
+.userRole {
+    font-size: 1rem;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    margin-bottom: 0.75rem;
+}
+
+.userEmail {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    word-break: break-all;
+}
+
+.profileContent {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contentSection {
+    padding: 2rem;
+}
+
+.sectionTitle {
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.infoCard {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--background);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.infoCard:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.infoIcon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.infoContent {
+    flex: 1;
+}
+
+.infoLabel {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.infoValue {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Dark mode specific styles */
+:global(.dark) {
+    --card-bg: #1f2937;
+    --background: #111827;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --primary: #3b82f6;
+    --primary-light: rgba(59, 130, 246, 0.1);
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Light mode specific styles */
+:global(.light) {
+    --card-bg: #ffffff;
+    --background: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --primary: #2563eb;
+    --primary-light: rgba(37, 99, 235, 0.1);
+    --border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .profileWrapper {
+        grid-template-columns: 250px 1fr;
+        gap: 1.5rem;
+    }
 }
 
 @media (max-width: 768px) {
-    .profileContainer {
+    .container {
         padding: 1rem;
     }
 
-    .profileCard {
-        padding: 2rem;
+    .profileWrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .profileSidebar {
+        position: static;
+        margin-bottom: 1.5rem;
     }
 
     .avatar {
         width: 100px;
         height: 100px;
-        font-size: 2.5rem;
+    }
+
+    .contentSection {
+        padding: 1.5rem;
+    }
+
+    .infoGrid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .backButton {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .userName {
+        font-size: 1.25rem;
+    }
+
+    .userRole {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .contentSection {
+        padding: 1rem;
+    }
+
+    .infoCard {
+        padding: 1rem;
+    }
+
+    .infoIcon {
+        width: 32px;
+        height: 32px;
     }
 } 

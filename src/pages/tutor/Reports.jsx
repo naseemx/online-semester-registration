@@ -1,7 +1,55 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { tutorAPI } from '../../utils/api';
-import { FaDownload, FaSpinner } from 'react-icons/fa';
-import 'animate.css';
+import { 
+    FaDownload, 
+    FaSpinner, 
+    FaCheckCircle, 
+    FaExclamationCircle,
+    FaFileExcel,
+    FaUserGraduate,
+    FaHourglassHalf,
+    FaMoneyBill
+} from 'react-icons/fa';
+import styles from './Reports.module.css';
+
+const ReportCard = ({ title, description, type, icon: Icon, color, downloading, onDownload }) => {
+    return (
+        <motion.div 
+            className={styles.reportCard}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+        >
+            <div className={`${styles.reportIcon} ${styles[color]}`}>
+                <Icon size={24} />
+            </div>
+            <div className={styles.reportContent}>
+                <h3 className={styles.reportTitle}>{title}</h3>
+                <p className={styles.reportDescription}>{description}</p>
+                <motion.button
+                    className={`${styles.downloadButton} ${styles[color]}`}
+                    onClick={() => onDownload(type)}
+                    disabled={downloading === type}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                >
+                    {downloading === type ? (
+                        <>
+                            <FaSpinner className={styles.spinner} />
+                            <span>Downloading...</span>
+                        </>
+                    ) : (
+                        <>
+                            <FaDownload />
+                            <span>Download Report</span>
+                        </>
+                    )}
+                </motion.button>
+            </div>
+        </motion.div>
+    );
+};
 
 const Reports = () => {
     const [downloading, setDownloading] = useState(null);
@@ -38,153 +86,82 @@ const Reports = () => {
         }
     };
 
+    const reports = [
+        {
+            title: 'Completed Registrations',
+            description: 'List of students who have completed their semester registration',
+            type: 'completed',
+            icon: FaUserGraduate,
+            color: 'success'
+        },
+        {
+            title: 'Pending Registrations',
+            description: 'List of students with pending or incomplete registrations',
+            type: 'pending',
+            icon: FaHourglassHalf,
+            color: 'warning'
+        },
+        {
+            title: 'Pending Fines Report',
+            description: 'List of students with pending fines and dues',
+            type: 'fines',
+            icon: FaMoneyBill,
+            color: 'danger'
+        }
+    ];
+
     return (
-        <div className="container py-4">
-            <div className="card shadow animate__animated animate__fadeIn">
-                <div className="card-header bg-primary text-white">
-                    <h4 className="mb-0">Generate Reports</h4>
-                </div>
-                <div className="card-body">
-                    {error && (
-                        <div className="alert alert-danger animate__animated animate__shakeX">
-                            {error}
-                        </div>
-                    )}
+        <div className={styles.container}>
+            <header className={styles.header}>
+                <h1 className={styles.title}>Generate Reports</h1>
+                <p className={styles.subtitle}>Download detailed reports in Excel format</p>
+            </header>
 
-                    <div className="row g-4">
-                        {/* Completed Registrations Report */}
-                        <div className="col-md-4">
-                            <div className="card h-100">
-                                <div className="card-body">
-                                    <h5 className="card-title text-success">
-                                        <FaDownload className="me-2" />
-                                        Completed Registrations
-                                    </h5>
-                                    <p className="card-text">
-                                        List of students who have completed their semester registration
-                                    </p>
-                                    <button
-                                        className="btn btn-success w-100"
-                                        onClick={() => handleDownload('completed')}
-                                        disabled={downloading === 'completed'}
-                                    >
-                                        {downloading === 'completed' ? (
-                                            <>
-                                                <FaSpinner className="me-2 spin" />
-                                                Downloading...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaDownload className="me-2" />
-                                                Download Report
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            <AnimatePresence>
+                {error && (
+                    <motion.div 
+                        className={styles.error}
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                    >
+                        <FaExclamationCircle />
+                        <span>{error}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                        {/* Pending Registrations Report */}
-                        <div className="col-md-4">
-                            <div className="card h-100">
-                                <div className="card-body">
-                                    <h5 className="card-title text-warning">
-                                        <FaDownload className="me-2" />
-                                        Pending Registrations
-                                    </h5>
-                                    <p className="card-text">
-                                        List of students with pending or incomplete registrations
-                                    </p>
-                                    <button
-                                        className="btn btn-warning w-100"
-                                        onClick={() => handleDownload('pending')}
-                                        disabled={downloading === 'pending'}
-                                    >
-                                        {downloading === 'pending' ? (
-                                            <>
-                                                <FaSpinner className="me-2 spin" />
-                                                Downloading...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaDownload className="me-2" />
-                                                Download Report
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            <div className={styles.reportsGrid}>
+                {reports.map((report) => (
+                    <ReportCard
+                        key={report.type}
+                        {...report}
+                        downloading={downloading}
+                        onDownload={handleDownload}
+                    />
+                ))}
+            </div>
 
-                        {/* Pending Fines Report */}
-                        <div className="col-md-4">
-                            <div className="card h-100">
-                                <div className="card-body">
-                                    <h5 className="card-title text-danger">
-                                        <FaDownload className="me-2" />
-                                        Pending Fines Report
-                                    </h5>
-                                    <p className="card-text">
-                                        List of students with pending fines and dues
-                                    </p>
-                                    <button
-                                        className="btn btn-danger w-100"
-                                        onClick={() => handleDownload('fines')}
-                                        disabled={downloading === 'fines'}
-                                    >
-                                        {downloading === 'fines' ? (
-                                            <>
-                                                <FaSpinner className="me-2 spin" />
-                                                Downloading...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaDownload className="me-2" />
-                                                Download Report
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            <div className={styles.infoSection}>
+                <h2 className={styles.infoTitle}>
+                    <FaFileExcel />
+                    <span>Report Information</span>
+                </h2>
+                <div className={styles.infoGrid}>
+                    <div className={styles.infoCard}>
+                        <h3>Completed Registrations Report</h3>
+                        <p>Contains details of students who have successfully completed their semester registration, including verification statuses and registration date.</p>
                     </div>
-
-                    {/* Report Information */}
-                    <div className="mt-4">
-                        <h5>Report Information</h5>
-                        <div className="list-group">
-                            <div className="list-group-item">
-                                <h6 className="mb-1">Completed Registrations Report:</h6>
-                                <p className="mb-0 text-muted">
-                                    Contains details of students who have successfully completed their semester registration, including verification statuses and registration date.
-                                </p>
-                            </div>
-                            <div className="list-group-item">
-                                <h6 className="mb-1">Pending Registrations Report:</h6>
-                                <p className="mb-0 text-muted">
-                                    Lists students with incomplete registrations, including their current verification status and any pending requirements.
-                                </p>
-                            </div>
-                            <div className="list-group-item">
-                                <h6 className="mb-1">Pending Fines Report:</h6>
-                                <p className="mb-0 text-muted">
-                                    Provides information about students with outstanding fines or dues, including the amount and category of each fine.
-                                </p>
-                            </div>
-                        </div>
+                    <div className={styles.infoCard}>
+                        <h3>Pending Registrations Report</h3>
+                        <p>Lists students with incomplete registrations, including their current verification status and any pending requirements.</p>
+                    </div>
+                    <div className={styles.infoCard}>
+                        <h3>Pending Fines Report</h3>
+                        <p>Provides information about students with outstanding fines or dues, including the amount and category of each fine.</p>
                     </div>
                 </div>
             </div>
-
-            <style jsx>{`
-                .spin {
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
         </div>
     );
 };
