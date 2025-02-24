@@ -1,7 +1,44 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { studentAPI } from '../../utils/api';
-import { FaGraduationCap, FaCheckCircle, FaTimesCircle, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
-import 'animate.css';
+import { 
+    FaGraduationCap, 
+    FaCheckCircle, 
+    FaTimesCircle, 
+    FaSpinner, 
+    FaExclamationTriangle,
+    FaInfoCircle,
+    FaEnvelope
+} from 'react-icons/fa';
+import styles from './Registration.module.css';
+
+const StatusCard = ({ title, status, icon: Icon, description }) => {
+    const isCleared = status === 'clear';
+    return (
+        <motion.div 
+            className={`${styles.statusCard} ${isCleared ? styles.cleared : styles.pending}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+        >
+            <div className={styles.statusIcon}>
+                <Icon />
+            </div>
+            <div className={styles.statusContent}>
+                <h3>{title}</h3>
+                <p>{description}</p>
+                <div className={styles.statusBadge}>
+                    {isCleared ? (
+                        <FaCheckCircle className={styles.checkIcon} />
+                    ) : (
+                        <FaTimesCircle className={styles.pendingIcon} />
+                    )}
+                    <span>{isCleared ? 'Cleared' : 'Pending'}</span>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
 
 const Registration = () => {
     const [status, setStatus] = useState(null);
@@ -22,17 +59,6 @@ const Registration = () => {
             if (response.data.success) {
                 const data = response.data.data;
                 console.log('Student status data:', data);
-
-                // Check if there are any active registrations
-                const hasActiveRegistration = data.activeRegistrations && data.activeRegistrations.length > 0;
-
-                if (!hasActiveRegistration) {
-                    console.log('No active registrations found');
-                    setError('No active registration available for your department and semester.');
-                } else {
-                    console.log('Found active registrations:', data.activeRegistrations);
-                }
-
                 setStatus(data);
             } else {
                 throw new Error(response.data.message || 'Failed to fetch status');
@@ -54,30 +80,38 @@ const Registration = () => {
         );
     };
 
+    const canApplyForRegistration = () => {
+        if (!status) return false;
+        
+        // Check for active registration
+        const hasActiveRegistration = status.activeRegistrations && 
+            status.activeRegistrations.length > 0 &&
+            status.activeRegistrations.some(reg => reg.status === 'active');
+
+        // Check for pending fines
+        const hasFines = hasPendingFines(status.fines);
+
+        // Check current registration status
+        const isNotStarted = status.student?.registrationStatus === 'not started';
+
+        return hasActiveRegistration && !hasFines && isNotStarted;
+    };
+
     const handleApplyRegistration = async () => {
         try {
             setApplying(true);
             setError('');
             setSuccess(false);
 
-            // Check for pending fines before proceeding
-            if (hasPendingFines(status.fines)) {
-                setError('Cannot apply for registration. Please clear all pending fines first.');
-                return;
-            }
-
-            // Check if there is an active registration
-            const hasActiveRegistration = status.activeRegistrations && status.activeRegistrations.length > 0;
-
-            if (!hasActiveRegistration) {
-                setError('No active registration available for your department and semester.');
+            if (!canApplyForRegistration()) {
+                setError('Cannot apply for registration at this time.');
                 return;
             }
 
             const response = await studentAPI.applyRegistration();
             if (response.data.success) {
                 setSuccess(true);
-                await fetchStatus();
+                await fetchStatus(); // Refresh status after successful application
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Error applying for registration');
@@ -88,147 +122,159 @@ const Registration = () => {
 
     if (loading) {
         return (
-            <div className="d-flex justify-content-center align-items-center min-vh-100">
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
+            <div className={styles.loadingContainer}>
+                <FaSpinner className={styles.spinner} />
+                <p>Loading registration status...</p>
             </div>
         );
     }
 
+    const getRegistrationStatusColor = () => {
+        const statusColors = {
+            'not started': 'default',
+            'submitted': 'warning',
+            'approved': 'success',
+            'rejected': 'error'
+        };
+        return statusColors[status?.student?.registrationStatus] || 'default';
+    };
+
     return (
-        <div className="container py-4">
-            <div className="card shadow animate__animated animate__fadeIn">
-                <div className="card-header bg-primary text-white">
-                    <h4 className="mb-0">
-                        <FaGraduationCap className="me-2" />
-                        Semester Registration
-                    </h4>
+        <div className={styles.container}>
+            <header className={styles.header}>
+                <div className={styles.headerContent}>
+                    <FaGraduationCap className={styles.headerIcon} />
+                    <div>
+                        <h1>Semester Registration</h1>
+                        <p>Manage your semester registration process</p>
+                    </div>
                 </div>
-                <div className="card-body">
-                    {error && (
-                        <div className="alert alert-danger animate__animated animate__shakeX">
-                            {error}
-                        </div>
-                    )}
-                    {success && (
-                        <div className="alert alert-success animate__animated animate__fadeIn">
-                            Registration application submitted successfully!
-                        </div>
-                    )}
+            </header>
 
-                    {/* Student Info */}
-                    <div className="card mb-4">
-                        <div className="card-body">
-                            <h5 className="card-title">Student Information</h5>
-                            <div className="row">
-                                <div className="col-md-6">
-                                    <p><strong>Name:</strong> {status?.student?.name}</p>
-                                    <p><strong>Admission Number:</strong> {status?.student?.admissionNumber}</p>
-                                </div>
-                                <div className="col-md-6">
-                                    <p><strong>Department:</strong> {status?.student?.department}</p>
-                                    <p><strong>Semester:</strong> {status?.student?.semester}</p>
-                                </div>
-                            </div>
+            <AnimatePresence>
+                {error && (
+                    <motion.div 
+                        className={styles.error}
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                    >
+                        <FaExclamationTriangle />
+                        <span>{error}</span>
+                    </motion.div>
+                )}
+
+                {success && (
+                    <motion.div 
+                        className={styles.success}
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                    >
+                        <FaEnvelope />
+                        <span>Registration submitted successfully! A confirmation email has been sent.</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <div className={styles.content}>
+                {/* Student Information */}
+                <div className={styles.infoCard}>
+                    <h2>Student Information</h2>
+                    <div className={styles.infoGrid}>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Name</span>
+                            <span className={styles.infoValue}>{status?.student?.name}</span>
+                        </div>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Admission Number</span>
+                            <span className={styles.infoValue}>{status?.student?.admissionNumber}</span>
+                        </div>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Department</span>
+                            <span className={styles.infoValue}>{status?.student?.department}</span>
+                        </div>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Semester</span>
+                            <span className={styles.infoValue}>{status?.student?.semester}</span>
                         </div>
                     </div>
+                </div>
 
-                    {/* Verification Status */}
-                    <div className="card mb-4">
-                        <div className="card-header">
-                            <h5 className="mb-0">Verification Status</h5>
-                        </div>
-                        <div className="card-body">
-                            <div className="d-flex flex-column gap-3">
-                                <div className="d-flex align-items-center">
-                                    <FaCheckCircle className={`me-2 ${
-                                        status?.verificationStatus?.library === 'clear' ? 'text-success' : 'text-danger'
-                                    }`} />
-                                    <div>
-                                        <h6 className="mb-0">Library Status</h6>
-                                        <small className="text-muted">{status?.verificationStatus?.library}</small>
-                                    </div>
-                                </div>
-                                <div className="d-flex align-items-center">
-                                    <FaCheckCircle className={`me-2 ${
-                                        status?.verificationStatus?.lab === 'clear' ? 'text-success' : 'text-danger'
-                                    }`} />
-                                    <div>
-                                        <h6 className="mb-0">Lab Status</h6>
-                                        <small className="text-muted">{status?.verificationStatus?.lab}</small>
-                                    </div>
-                                </div>
-                                <div className="d-flex align-items-center">
-                                    <FaCheckCircle className={`me-2 ${
-                                        status?.verificationStatus?.office === 'clear' ? 'text-success' : 'text-danger'
-                                    }`} />
-                                    <div>
-                                        <h6 className="mb-0">Office Status</h6>
-                                        <small className="text-muted">{status?.verificationStatus?.office}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                {/* Registration Status */}
+                <div className={styles.statusSection}>
+                    <h2>Registration Status</h2>
+                    <div className={`${styles.currentStatus} ${styles[getRegistrationStatusColor()]}`}>
+                        <FaInfoCircle />
+                        <span>Current Status: {status?.student?.registrationStatus?.toUpperCase() || 'NOT STARTED'}</span>
                     </div>
 
-                    {/* Fines Status */}
-                    {status?.fines && hasPendingFines(status.fines) && (
-                        <div className="alert alert-warning mb-4">
-                            <FaExclamationTriangle className="me-2" />
-                            <strong>Warning:</strong> You have pending fines that need to be cleared before applying for registration.
-                            Please visit the finance office to clear your dues.
-                        </div>
-                    )}
+                    {/* Verification Status Cards */}
+                    <div className={styles.statusGrid}>
+                        <StatusCard
+                            title="Library Status"
+                            status={status?.verificationStatus?.library}
+                            icon={FaCheckCircle}
+                            description="Library clearance and book returns"
+                        />
+                        <StatusCard
+                            title="Lab Status"
+                            status={status?.verificationStatus?.lab}
+                            icon={FaCheckCircle}
+                            description="Laboratory equipment and dues clearance"
+                        />
+                        <StatusCard
+                            title="Office Status"
+                            status={status?.verificationStatus?.office}
+                            icon={FaCheckCircle}
+                            description="Administrative office clearance"
+                        />
+                    </div>
+                </div>
 
-                    {/* Registration Status and Action */}
-                    <div className="text-center">
-                        <div className="mb-3">
-                            <span className={`badge bg-${
-                                status?.student?.registrationStatus === 'completed' ? 'success' :
-                                status?.student?.registrationStatus === 'in progress' ? 'warning' :
-                                'secondary'
-                            } fs-6`}>
-                                Registration Status: {status?.student?.registrationStatus?.toUpperCase()}
-                            </span>
+                {/* Fines Warning */}
+                {status?.fines && hasPendingFines(status.fines) && (
+                    <motion.div 
+                        className={styles.warning}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <FaExclamationTriangle />
+                        <div>
+                            <h3>Pending Fines</h3>
+                            <p>Please clear all pending fines before applying for registration.</p>
                         </div>
-                        <button
-                            className="btn btn-primary btn-lg"
-                            onClick={handleApplyRegistration}
-                            disabled={
-                                applying ||
-                                status?.student?.registrationStatus === 'completed' ||
-                                hasPendingFines(status?.fines)
-                            }
-                        >
-                            {applying ? (
-                                <>
-                                    <FaSpinner className="me-2 spin" />
-                                    Applying...
-                                </>
-                            ) : (
-                                'Apply for Registration'
-                            )}
-                        </button>
-                        {status?.student?.registrationStatus === 'completed' && (
-                            <div className="mt-3 text-success">
-                                <FaCheckCircle className="me-2" />
-                                Your registration has been completed!
-                            </div>
+                    </motion.div>
+                )}
+
+                {/* Action Button */}
+                <div className={styles.actionSection}>
+                    <motion.button
+                        className={styles.applyButton}
+                        onClick={handleApplyRegistration}
+                        disabled={!canApplyForRegistration() || applying}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
+                        {applying ? (
+                            <>
+                                <FaSpinner className={styles.spinner} />
+                                <span>Applying...</span>
+                            </>
+                        ) : (
+                            <>
+                                <FaGraduationCap />
+                                <span>Apply for Registration</span>
+                            </>
                         )}
-                    </div>
+                    </motion.button>
+                    {!canApplyForRegistration() && !status?.activeRegistrations?.length && (
+                        <p className={styles.noRegistrationMessage}>
+                            No active registration available for your department and semester.
+                        </p>
+                    )}
                 </div>
             </div>
-
-            <style jsx>{`
-                .spin {
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
         </div>
     );
 };
