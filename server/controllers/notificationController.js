@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 
 // Get notifications
 const getNotifications = async (req, res) => {
@@ -39,35 +40,63 @@ const getNotifications = async (req, res) => {
 // Send notification
 const sendNotification = async (req, res) => {
     try {
-        const { userId, title, message, type = 'info', link } = req.body;
+        const { title, message, type = 'info', recipients = 'all' } = req.body;
 
-        if (!userId || !title || !message) {
+        if (!title || !message) {
             return res.status(400).json({
                 success: false,
                 message: 'Missing required fields'
             });
         }
 
-        const notification = new Notification({
-            user: userId,
-            title,
-            message,
-            type,
-            link,
-            read: false
-        });
+        // Get users based on recipient type
+        let users = [];
+        switch (recipients) {
+            case 'all':
+                users = await User.find({});
+                break;
+            case 'students':
+                users = await User.find({ role: 'student' });
+                break;
+            case 'staff':
+                users = await User.find({ role: 'staff' });
+                break;
+            case 'tutors':
+                users = await User.find({ role: 'tutor' });
+                break;
+            case 'admins':
+                users = await User.find({ role: 'admin' });
+                break;
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid recipient type'
+                });
+        }
 
-        await notification.save();
+        // Create notifications for all users
+        const notifications = await Promise.all(
+            users.map(user => 
+                new Notification({
+                    user: user._id,
+                    title,
+                    message,
+                    type,
+                    read: false
+                }).save()
+            )
+        );
 
         res.json({
             success: true,
-            data: notification
+            data: notifications,
+            message: `Notification sent to ${notifications.length} users`
         });
     } catch (error) {
         console.error('Send notification error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error sending notification'
+            message: error.message || 'Error sending notification'
         });
     }
 };

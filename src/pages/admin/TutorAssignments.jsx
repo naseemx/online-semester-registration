@@ -1,49 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    Paper,
-    Typography,
-    Button,
-    IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Chip,
-    Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TablePagination,
-    useTheme,
-    Tooltip,
-    Alert,
-    CircularProgress
-} from '@mui/material';
-import {
-    Add as AddIcon,
-    Edit as EditIcon,
-    Delete as DeleteIcon,
-    Person as PersonIcon,
-    School as SchoolIcon,
-    Numbers as NumbersIcon
-} from '@mui/icons-material';
+import { FaUserGraduate, FaEdit, FaTrash, FaPlus, FaSchool, FaChevronDown, FaChevronUp, FaGraduationCap, FaEnvelope, FaIdCard, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { adminAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
+import styles from './TutorAssignments.module.css';
 
 const DEPARTMENTS = ['CSE', 'ECE', 'CE', 'ME', 'SFE', 'CSCS', 'CSBS', 'AI&DS'];
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
+const STUDENTS_PER_PAGE = 6;
 
 const TutorAssignments = () => {
-    const theme = useTheme();
     const [assignments, setAssignments] = useState([]);
     const [tutors, setTutors] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -53,8 +18,9 @@ const TutorAssignments = () => {
         tutorId: '',
         assignments: [{ department: '', semester: '' }]
     });
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [expandedTutors, setExpandedTutors] = useState(new Set());
+    const [studentDetails, setStudentDetails] = useState({});
+    const [studentPages, setStudentPages] = useState({});
 
     useEffect(() => {
         fetchData();
@@ -69,7 +35,26 @@ const TutorAssignments = () => {
             ]);
 
             if (assignmentsResponse.data?.success) {
-                setAssignments(assignmentsResponse.data.data || []);
+                const assignmentsData = assignmentsResponse.data.data || [];
+                setAssignments(assignmentsData);
+
+                // Fetch student details for each assignment
+                const studentDetailsPromises = assignmentsData.map(async (assignment) => {
+                    try {
+                        const response = await adminAPI.getTutorAssignmentStudents(assignment._id);
+                        if (response.data?.success) {
+                            return { [assignment._id]: response.data.data.students };
+                        }
+                        return { [assignment._id]: [] };
+                    } catch (error) {
+                        console.error('Error fetching students for assignment:', error);
+                        return { [assignment._id]: [] };
+                    }
+                });
+
+                const studentDetailsResults = await Promise.all(studentDetailsPromises);
+                const combinedStudentDetails = studentDetailsResults.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+                setStudentDetails(combinedStudentDetails);
             }
             
             if (tutorsResponse.data?.success) {
@@ -166,196 +151,296 @@ const TutorAssignments = () => {
         }));
     };
 
+    const toggleTutorExpansion = (tutorId) => {
+        setExpandedTutors(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(tutorId)) {
+                newSet.delete(tutorId);
+            } else {
+                newSet.add(tutorId);
+            }
+            return newSet;
+        });
+    };
+
+    const getInitials = (name) => {
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase();
+    };
+
+    if (loading) {
+        return (
+            <div className={styles.loading}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <Box sx={{ p: 3, minHeight: '100vh' }}>
-            <Paper 
-                elevation={2} 
-                sx={{ 
-                    p: 3,
-                    bgcolor: theme.palette.background.paper,
-                    color: theme.palette.text.primary
-                }}
-            >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" component="h1">
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <div className={styles.titleSection}>
+                    <h1 className={styles.title}>
+                        <FaUserGraduate />
                         Tutor Assignments
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setDialogOpen(true)}
-                    >
-                        New Assignment
-                    </Button>
-                </Box>
+                    </h1>
+                    <p className={styles.subtitle}>Manage tutor assignments and view student details</p>
+                </div>
+                <button
+                    className={styles.addButton}
+                    onClick={() => setDialogOpen(true)}
+                >
+                    <FaPlus />
+                    New Assignment
+                </button>
+            </div>
 
-                {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                        <CircularProgress />
-                    </Box>
-                ) : (
-                    <TableContainer>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Tutor</TableCell>
-                                    <TableCell>Assignments</TableCell>
-                                    <TableCell align="right">Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {assignments
-                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                    .map((assignment) => (
-                                    <TableRow key={assignment._id}>
-                                        <TableCell>
-                                            <Stack direction="row" spacing={1} alignItems="center">
-                                                <PersonIcon />
-                                                <Box>
-                                                    <Typography>{assignment.tutor.username}</Typography>
-                                                    <Typography variant="caption" color="textSecondary">
-                                                        {assignment.tutor.email}
-                                                    </Typography>
-                                                </Box>
-                                            </Stack>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                                                {assignment.assignments.map((a, index) => (
-                                                    <Chip
-                                                        key={index}
-                                                        label={`${a.department} - Sem ${a.semester}`}
-                                                        color="primary"
-                                                        variant="outlined"
-                                                        icon={<SchoolIcon />}
-                                                    />
-                                                ))}
-                                            </Stack>
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Tooltip title="Edit">
-                                                <IconButton 
-                                                    onClick={() => handleEdit(assignment)}
-                                                    color="primary"
-                                                >
-                                                    <EditIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Delete">
-                                                <IconButton
-                                                    onClick={() => handleDelete(assignment._id)}
-                                                    color="error"
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </TableCell>
-                                    </TableRow>
+            <div className={styles.tutorGrid}>
+                {assignments.map((assignment) => (
+                    <div key={assignment._id} className={styles.tutorCard}>
+                        <div className={styles.tutorHeader}>
+                            <div className={styles.tutorInfo}>
+                                <div className={styles.tutorAvatar}>
+                                    {getInitials(assignment.tutor.username)}
+                                </div>
+                                <div className={styles.tutorDetails}>
+                                    <h3>{assignment.tutor.username}</h3>
+                                    <div className={styles.tutorEmail}>
+                                        <FaEnvelope /> {assignment.tutor.email}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={styles.tutorActions}>
+                                <button
+                                    className={styles.actionButton}
+                                    onClick={() => handleEdit(assignment)}
+                                    title="Edit Assignment"
+                                >
+                                    <FaEdit />
+                                </button>
+                                <button
+                                    className={`${styles.actionButton} ${styles.delete}`}
+                                    onClick={() => handleDelete(assignment._id)}
+                                    title="Delete Assignment"
+                                >
+                                    <FaTrash />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className={styles.assignmentSection}>
+                            <h4 className={styles.sectionTitle}>
+                                <FaSchool /> Assigned Classes
+                            </h4>
+                            <div className={styles.assignments}>
+                                {assignment.assignments.map((a, index) => (
+                                    <div key={index} className={styles.assignmentChip}>
+                                        <FaGraduationCap />
+                                        {a.department} - Semester {a.semester}
+                                    </div>
                                 ))}
-                            </TableBody>
-                        </Table>
-                        <TablePagination
-                            component="div"
-                            count={assignments.length}
-                            page={page}
-                            onPageChange={(e, newPage) => setPage(newPage)}
-                            rowsPerPage={rowsPerPage}
-                            onRowsPerPageChange={(e) => {
-                                setRowsPerPage(parseInt(e.target.value, 10));
-                                setPage(0);
-                            }}
-                        />
-                    </TableContainer>
-                )}
-            </Paper>
+                            </div>
+                        </div>
 
-            <Dialog 
-                open={dialogOpen} 
-                onClose={handleCloseDialog}
-                maxWidth="md"
-                fullWidth
-            >
-                <DialogTitle>
-                    {editingAssignment ? 'Edit Assignment' : 'New Assignment'}
-                </DialogTitle>
-                <DialogContent>
-                    <Box sx={{ pt: 2 }}>
-                        <FormControl fullWidth sx={{ mb: 3 }}>
-                            <InputLabel>Select Tutor</InputLabel>
-                            <Select
+                        <div className={styles.studentsSection}>
+                            <div className={styles.studentsHeader}>
+                                <h4 className={styles.sectionTitle}>
+                                    <FaUserGraduate /> Student Details
+                                </h4>
+                                <button
+                                    className={styles.expandButton}
+                                    onClick={() => toggleTutorExpansion(assignment._id)}
+                                >
+                                    {expandedTutors.has(assignment._id) ? <FaChevronUp /> : <FaChevronDown />}
+                                    {expandedTutors.has(assignment._id) ? 'Hide' : 'Show'} Students
+                                </button>
+                            </div>
+
+                            {expandedTutors.has(assignment._id) && (
+                                <div className={styles.studentsList}>
+                                    {assignment.assignments.map((a) => {
+                                        const students = studentDetails[assignment._id]?.filter(
+                                            student => student.department === a.department && student.semester === a.semester
+                                        ) || [];
+
+                                        const pageKey = `${assignment._id}-${a.department}-${a.semester}`;
+                                        const currentPage = studentPages[pageKey] || 1;
+                                        const totalPages = Math.ceil(students.length / STUDENTS_PER_PAGE);
+                                        const startIndex = (currentPage - 1) * STUDENTS_PER_PAGE;
+                                        const paginatedStudents = students.slice(startIndex, startIndex + STUDENTS_PER_PAGE);
+
+                                        const handlePageChange = (newPage) => {
+                                            setStudentPages(prev => ({
+                                                ...prev,
+                                                [pageKey]: newPage
+                                            }));
+                                        };
+
+                                        return students.length > 0 ? (
+                                            <div key={`${a.department}-${a.semester}`} className={styles.studentGroup}>
+                                                <div className={styles.groupHeader}>
+                                                    <div className={styles.groupTitle}>
+                                                        {a.department} - Semester {a.semester}
+                                                        <span className={styles.studentCount}>
+                                                            {students.length} student{students.length !== 1 ? 's' : ''}
+                                                        </span>
+                                                    </div>
+                                                    {totalPages > 1 && (
+                                                        <div className={styles.pagination}>
+                                                            <button
+                                                                className={styles.pageButton}
+                                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                                disabled={currentPage === 1}
+                                                            >
+                                                                <FaChevronLeft />
+                                                            </button>
+                                                            <span className={styles.pageInfo}>
+                                                                Page {currentPage} of {totalPages}
+                                                            </span>
+                                                            <button
+                                                                className={styles.pageButton}
+                                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                                disabled={currentPage === totalPages}
+                                                            >
+                                                                <FaChevronRight />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className={styles.studentCards}>
+                                                    {paginatedStudents.map((student) => (
+                                                        <div key={student._id} className={styles.studentCard}>
+                                                            <div className={styles.studentAvatar}>
+                                                                {getInitials(student.name)}
+                                                            </div>
+                                                            <div className={styles.studentInfo}>
+                                                                <h4>{student.name}</h4>
+                                                                <div className={styles.studentDetails}>
+                                                                    <div className={styles.studentDetail}>
+                                                                        <FaIdCard /> 
+                                                                        <span className={styles.detailText}>
+                                                                            {student.admissionNumber}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className={styles.studentDetail}>
+                                                                        <FaEnvelope />
+                                                                        <span className={styles.detailText}>
+                                                                            {student.email}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div key={`${a.department}-${a.semester}`} className={styles.noStudents}>
+                                                No students found for {a.department} - Semester {a.semester}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {dialogOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modal}>
+                        <div className={styles.modalHeader}>
+                            <h2 className={styles.modalTitle}>
+                                {editingAssignment ? 'Edit Assignment' : 'New Assignment'}
+                            </h2>
+                            <button className={styles.closeButton} onClick={handleCloseDialog}>
+                                ×
+                            </button>
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>Select Tutor</label>
+                            <select
+                                className={styles.formSelect}
                                 value={formData.tutorId}
                                 onChange={(e) => setFormData(prev => ({ ...prev, tutorId: e.target.value }))}
                                 disabled={!!editingAssignment}
-                                label="Select Tutor"
                             >
+                                <option value="">Select a tutor</option>
                                 {tutors.map(tutor => (
-                                    <MenuItem key={tutor._id} value={tutor._id}>
+                                    <option key={tutor._id} value={tutor._id}>
                                         {tutor.username} ({tutor.email})
-                                    </MenuItem>
+                                    </option>
                                 ))}
-                            </Select>
-                        </FormControl>
+                            </select>
+                        </div>
 
                         {formData.assignments.map((assignment, index) => (
-                            <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                                <FormControl sx={{ flex: 1 }}>
-                                    <InputLabel>Department</InputLabel>
-                                    <Select
+                            <div key={index} className={styles.formGroup}>
+                                <div className={styles.formLabel}>Department-Semester Combination {index + 1}</div>
+                                <div className={styles.formRow}>
+                                    <select
+                                        className={styles.formSelect}
                                         value={assignment.department}
                                         onChange={(e) => handleAssignmentChange(index, 'department', e.target.value)}
-                                        label="Department"
                                     >
+                                        <option value="">Select Department</option>
                                         {DEPARTMENTS.map(dept => (
-                                            <MenuItem key={dept} value={dept}>{dept}</MenuItem>
+                                            <option key={dept} value={dept}>{dept}</option>
                                         ))}
-                                    </Select>
-                                </FormControl>
-                                <FormControl sx={{ flex: 1 }}>
-                                    <InputLabel>Semester</InputLabel>
-                                    <Select
+                                    </select>
+                                    <select
+                                        className={styles.formSelect}
                                         value={assignment.semester}
                                         onChange={(e) => handleAssignmentChange(index, 'semester', e.target.value)}
-                                        label="Semester"
                                     >
+                                        <option value="">Select Semester</option>
                                         {SEMESTERS.map(sem => (
-                                            <MenuItem key={sem} value={sem}>Semester {sem}</MenuItem>
+                                            <option key={sem} value={sem}>Semester {sem}</option>
                                         ))}
-                                    </Select>
-                                </FormControl>
-                                {formData.assignments.length > 1 && (
-                                    <IconButton 
-                                        onClick={() => removeAssignment(index)}
-                                        color="error"
-                                    >
-                                        <DeleteIcon />
-                                    </IconButton>
-                                )}
-                            </Box>
+                                    </select>
+                                    {formData.assignments.length > 1 && (
+                                        <button
+                                            className={`${styles.actionButton} ${styles.delete}`}
+                                            onClick={() => removeAssignment(index)}
+                                            title="Remove Combination"
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         ))}
 
-                        <Button
-                            variant="outlined"
-                            startIcon={<AddIcon />}
+                        <button
+                            className={styles.addCombinationButton}
                             onClick={addAssignment}
-                            fullWidth
-                            sx={{ mt: 2 }}
                         >
-                            Add Department-Semester Combination
-                        </Button>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button 
-                        variant="contained" 
-                        onClick={handleSubmit}
-                        disabled={!formData.tutorId || formData.assignments.some(a => !a.department || !a.semester)}
-                    >
-                        {editingAssignment ? 'Update' : 'Create'} Assignment
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+                            <FaPlus /> Add Another Combination
+                        </button>
+
+                        <div className={styles.modalActions}>
+                            <button className={styles.cancelButton} onClick={handleCloseDialog}>
+                                Cancel
+                            </button>
+                            <button
+                                className={styles.submitButton}
+                                onClick={handleSubmit}
+                                disabled={!formData.tutorId || formData.assignments.some(a => !a.department || !a.semester)}
+                            >
+                                {editingAssignment ? 'Update' : 'Create'} Assignment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

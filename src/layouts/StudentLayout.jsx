@@ -1,38 +1,34 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { FaClipboardList, FaCheckCircle, FaUserGraduate } from 'react-icons/fa';
-import Header from '../components/Header';
-import styles from './StudentLayout.module.css';
+import DashboardLayout from './DashboardLayout';
 
 const StudentLayout = ({ children }) => {
+    const navItems = [
+        {
+            path: '/student/registration',
+            icon: <FaClipboardList />,
+            label: 'Registration'
+        },
+        {
+            path: '/student/status',
+            icon: <FaCheckCircle />,
+            label: 'Status'
+        },
+        {
+            path: '/profile',
+            icon: <FaUserGraduate />,
+            label: 'Profile'
+        }
+    ];
+
     return (
-        <div className={styles.layout}>
-            <aside className={styles.sidebar}>
-                <div className={styles.logo}>
-                    <Link to="/student/registration">SR System</Link>
-                </div>
-                <nav className={styles.nav}>
-                    <Link to="/student/registration" className={styles.navItem}>
-                        <FaClipboardList />
-                        <span>Registration</span>
-                    </Link>
-                    <Link to="/student/status" className={styles.navItem}>
-                        <FaCheckCircle />
-                        <span>Status</span>
-                    </Link>
-                    <Link to="/profile" className={styles.navItem}>
-                        <FaUserGraduate />
-                        <span>Profile</span>
-                    </Link>
-                </nav>
-            </aside>
-            <main className={styles.main}>
-                <Header />
-                <div className={styles.content}>
-                    {children}
-                </div>
-            </main>
-        </div>
+        <DashboardLayout 
+            navItems={navItems}
+            logo="SR System"
+            logoLink="/student/registration"
+        >
+            {children}
+        </DashboardLayout>
     );
 };
 

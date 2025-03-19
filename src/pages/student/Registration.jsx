@@ -152,7 +152,7 @@ const Registration = () => {
             </header>
 
             <AnimatePresence>
-                {error && (
+                    {error && (
                     <motion.div 
                         className={styles.error}
                         initial={{ opacity: 0, y: -20 }}
@@ -193,13 +193,13 @@ const Registration = () => {
                         <div className={styles.infoItem}>
                             <span className={styles.infoLabel}>Department</span>
                             <span className={styles.infoValue}>{status?.student?.department}</span>
-                        </div>
+                                </div>
                         <div className={styles.infoItem}>
                             <span className={styles.infoLabel}>Semester</span>
                             <span className={styles.infoValue}>{status?.student?.semester}</span>
                         </div>
                     </div>
-                </div>
+                        </div>
 
                 {/* Registration Status */}
                 <div className={styles.statusSection}>
@@ -207,7 +207,7 @@ const Registration = () => {
                     <div className={`${styles.currentStatus} ${styles[getRegistrationStatusColor()]}`}>
                         <FaInfoCircle />
                         <span>Current Status: {status?.student?.registrationStatus?.toUpperCase() || 'NOT STARTED'}</span>
-                    </div>
+                                    </div>
 
                     {/* Verification Status Cards */}
                     <div className={styles.statusGrid}>
@@ -229,11 +229,11 @@ const Registration = () => {
                             icon={FaCheckCircle}
                             description="Administrative office clearance"
                         />
+                        </div>
                     </div>
-                </div>
 
                 {/* Fines Warning */}
-                {status?.fines && hasPendingFines(status.fines) && (
+                    {status?.fines && hasPendingFines(status.fines) && (
                     <motion.div 
                         className={styles.warning}
                         initial={{ opacity: 0, y: 20 }}
@@ -251,17 +251,17 @@ const Registration = () => {
                 <div className={styles.actionSection}>
                     <motion.button
                         className={styles.applyButton}
-                        onClick={handleApplyRegistration}
+                            onClick={handleApplyRegistration}
                         disabled={!canApplyForRegistration() || applying}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                    >
-                        {applying ? (
-                            <>
+                        >
+                            {applying ? (
+                                <>
                                 <FaSpinner className={styles.spinner} />
                                 <span>Applying...</span>
-                            </>
-                        ) : (
+                                </>
+                            ) : (
                             <>
                                 <FaGraduationCap />
                                 <span>Apply for Registration</span>

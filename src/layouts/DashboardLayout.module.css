@@ -145,32 +145,6 @@
     color: var(--text-primary);
 }
 
-/* Dark mode specific styles */
-:global(.dark-mode) .sidebar {
-    background-color: var(--bg-primary);
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-}
-
-:global(.dark-mode) .navItem {
-    color: var(--nav-text);
-}
-
-:global(.dark-mode) .navItem:hover {
-    background-color: var(--hover-bg);
-    color: var(--nav-hover);
-    border-color: var(--accent-color);
-}
-
-:global(.dark-mode) .navItem.active {
-    background-color: var(--accent-bg);
-    color: var(--accent-color);
-}
-
-:global(.dark-mode) .content {
-    color: var(--text-primary);
-    box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.1);
-}
-
 /* Animations */
 @keyframes slideIn {
     from {

@@ -23,14 +23,17 @@ const NotificationBell = () => {
         try {
             setError(null);
             const response = await notificationAPI.getUnread();
-            if (response.data.success) {
-                setNotifications(response.data.data);
+            if (response.data?.success) {
+                setNotifications(response.data.data || []);
             } else {
-                throw new Error(response.data.message || 'Failed to fetch notifications');
+                throw new Error(response.data?.message || 'Failed to fetch notifications');
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
-            setError('Failed to load notifications');
+            // Only show error if it's not a 404 (which means no notifications)
+            if (error.response?.status !== 404) {
+                setError('Failed to load notifications');
+            }
             setNotifications([]); // Clear notifications on error
         }
     };
@@ -39,18 +42,21 @@ const NotificationBell = () => {
         try {
             setError(null);
             const response = await notificationAPI.markAsRead(id);
-            if (response.data.success) {
+            if (response.data?.success) {
                 // Update local state to remove the read notification
                 setNotifications(prevNotifications => 
                     prevNotifications.filter(notification => notification._id !== id)
                 );
                 setShowDropdown(false);
             } else {
-                throw new Error(response.data.message || 'Failed to mark notification as read');
+                throw new Error(response.data?.message || 'Failed to mark notification as read');
             }
         } catch (error) {
             console.error('Error marking notification as read:', error);
-            setError('Failed to mark notification as read');
+            // Don't show error for 404 (notification already read)
+            if (error.response?.status !== 404) {
+                setError('Failed to mark notification as read');
+            }
         }
     };
 
@@ -110,7 +116,10 @@ const NotificationBell = () => {
                             No new notifications
                         </div>
                     ) : (
-                        <>
+                        <div className={styles.notificationList} style={{
+                            maxHeight: '400px',
+                            overflowY: 'auto'
+                        }}>
                             {notifications.map((notification) => (
                                 <button
                                     key={notification._id}
@@ -134,7 +143,7 @@ const NotificationBell = () => {
                                     Click on a notification to mark it as read
                                 </small>
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
             )}

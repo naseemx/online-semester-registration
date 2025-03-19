@@ -121,9 +121,9 @@ export const adminAPI = {
 
 // Notification API calls
 export const notificationAPI = {
-    getAll: () => api.get('/api/notifications'),
-    getUnread: () => api.get('/api/notifications/unread'),
-    markAsRead: (id) => api.put(`/api/notifications/${id}/read`),
-    delete: (id) => api.delete(`/api/notifications/${id}`),
-    send: (data) => api.post('/api/notifications', data)
+    getAll: () => api.get('/notifications'),
+    getUnread: () => api.get('/notifications/unread'),
+    markAsRead: (id) => api.put(`/notifications/${id}/read`),
+    delete: (id) => api.delete(`/notifications/${id}`),
+    send: (data) => api.post('/notifications', data)
 };

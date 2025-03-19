@@ -70,7 +70,7 @@ const Profile = () => {
                     <div className={styles.userProfile}>
                         <div className={styles.avatar}>
                             <FaUserCircle />
-                        </div>
+                </div>
                         <h1 className={styles.userName}>{user?.name}</h1>
                         <span className={styles.userRole}>{getRoleLabel(user?.role)}</span>
                         <span className={styles.userEmail}>{user?.email}</span>

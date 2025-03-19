@@ -344,9 +344,27 @@ const generateReport = async (req, res) => {
         let filename;
         let worksheetName;
 
+        // Get tutor's assignments first
+        const tutorAssignment = await TutorAssignment.findOne({ tutor: req.user._id });
+        if (!tutorAssignment || !tutorAssignment.assignments.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'No assignments found for tutor'
+            });
+        }
+
+        // Create query for assigned students
+        const assignmentQuery = {
+            $or: tutorAssignment.assignments.map(({ department, semester }) => ({
+                department,
+                semester: Number(semester)
+            }))
+        };
+
         switch (type) {
             case 'completed':
                 data = await Student.find({
+                    ...assignmentQuery,
                     registrationStatus: 'completed'
                 }).select('-__v').lean();
                 
@@ -369,6 +387,7 @@ const generateReport = async (req, res) => {
 
             case 'pending':
                 data = await Student.find({
+                    ...assignmentQuery,
                     registrationStatus: { $in: ['not started', 'in progress'] }
                 }).select('-__v').lean();
                 
@@ -390,7 +409,12 @@ const generateReport = async (req, res) => {
                 break;
 
             case 'fines':
+                // First get the assigned students
+                const assignedStudents = await Student.find(assignmentQuery).select('_id');
+                const assignedStudentIds = assignedStudents.map(s => s._id);
+
                 data = await Fine.find({
+                    student: { $in: assignedStudentIds },
                     $or: [
                         { 'tuition.status': 'pending' },
                         { 'transportation.status': 'pending' },

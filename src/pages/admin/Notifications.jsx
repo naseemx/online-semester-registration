@@ -31,16 +31,31 @@ const Notifications = () => {
     const fetchNotifications = async () => {
         try {
             setLoading(true);
+            setError('');
             const response = await notificationAPI.getAll();
+            
             if (response.data?.success) {
-                setNotifications(response.data.data || []);
+                // Filter notifications based on status
+                let filteredNotifications = response.data.data || [];
+                if (filterStatus === 'unread') {
+                    filteredNotifications = filteredNotifications.filter(n => !n.read);
+                } else if (filterStatus === 'read') {
+                    filteredNotifications = filteredNotifications.filter(n => n.read);
+                }
+                setNotifications(filteredNotifications);
             } else {
                 throw new Error(response.data?.message || 'Failed to fetch notifications');
             }
         } catch (err) {
             console.error('Error fetching notifications:', err);
-            toast.error('Error fetching notifications');
-            setError('Error fetching notifications');
+            // Only show error if it's not a 404 (which means no notifications)
+            if (err.response?.status !== 404) {
+                const errorMessage = err.response?.data?.message || err.message || 'Error fetching notifications';
+                toast.error(errorMessage);
+                setError(errorMessage);
+            } else {
+                setNotifications([]);
+            }
         } finally {
             setLoading(false);
         }
@@ -48,9 +63,31 @@ const Notifications = () => {
 
     const handleSendNotification = async (e) => {
         e.preventDefault();
+        
+        // Validate inputs
+        if (!newNotification.title.trim()) {
+            toast.error('Please enter a title');
+            return;
+        }
+        if (!newNotification.message.trim()) {
+            toast.error('Please enter a message');
+            return;
+        }
+
         try {
             setSending(true);
-            const response = await notificationAPI.send(newNotification);
+            setError('');
+
+            // Format the notification data
+            const notificationData = {
+                title: newNotification.title.trim(),
+                message: newNotification.message.trim(),
+                type: newNotification.type,
+                recipients: newNotification.recipients
+            };
+
+            const response = await notificationAPI.send(notificationData);
+            
             if (response.data?.success) {
                 toast.success('Notification sent successfully');
                 setShowForm(false);
@@ -66,8 +103,9 @@ const Notifications = () => {
             }
         } catch (err) {
             console.error('Error sending notification:', err);
-            toast.error('Error sending notification');
-            setError('Error sending notification');
+            const errorMessage = err.response?.data?.message || err.message || 'Error sending notification';
+            toast.error(errorMessage);
+            setError(errorMessage);
         } finally {
             setSending(false);
         }
@@ -284,48 +322,53 @@ const Notifications = () => {
                             <p>No notifications found</p>
                         </div>
                     ) : (
-                        <div className="list-group">
-                            {notifications.map((notification) => (
-                                <div
-                                    key={notification._id}
-                                    className={`list-group-item list-group-item-action ${
-                                        !notification.read ? 'bg-light' : ''
-                                    } animate__animated animate__fadeIn`}
-                                >
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div className="d-flex align-items-center">
-                                                {getNotificationIcon(notification.type)}
-                                                <h6 className="mb-0 ms-2">{notification.title}</h6>
+                        <div className="notifications-container" style={{
+                            maxHeight: '600px',
+                            overflowY: 'auto',
+                            paddingRight: '10px'
+                        }}>
+                            <div className="list-group">
+                                {notifications.map((notification) => (
+                                    <div
+                                        key={notification._id}
+                                        className={`list-group-item list-group-item-action ${
+                                            !notification.read ? 'bg-light' : ''
+                                        } animate__animated animate__fadeIn`}
+                                    >
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div className="d-flex align-items-center">
+                                                    {getNotificationIcon(notification.type)}
+                                                    <h6 className="mb-0 ms-2">{notification.title}</h6>
+                                                </div>
+                                                <p className="mb-1 mt-2">{notification.message}</p>
+                                                <small className="text-muted">
+                                                    {new Date(notification.createdAt).toLocaleString()}
+                                                </small>
                                             </div>
-                                            <p className="mb-1 mt-2">{notification.message}</p>
-                                            <small className="text-muted">
-                                                Sent to: {notification.recipients} • 
-                                                {new Date(notification.createdAt).toLocaleString()}
-                                            </small>
-                                        </div>
-                                        <div className="btn-group">
-                                            <button
-                                                className="btn btn-outline-secondary btn-sm"
-                                                onClick={() => handleMarkAsRead(notification._id)}
-                                                disabled={notification.read}
-                                            >
-                                                {notification.read ? (
-                                                    <FaEye />
-                                                ) : (
-                                                    <FaEyeSlash />
-                                                )}
-                                            </button>
-                                            <button
-                                                className="btn btn-outline-danger btn-sm"
-                                                onClick={() => handleDeleteNotification(notification._id)}
-                                            >
-                                                <FaTrash />
-                                            </button>
+                                            <div className="btn-group">
+                                                <button
+                                                    className="btn btn-outline-secondary btn-sm"
+                                                    onClick={() => handleMarkAsRead(notification._id)}
+                                                    disabled={notification.read}
+                                                >
+                                                    {notification.read ? (
+                                                        <FaEye />
+                                                    ) : (
+                                                        <FaEyeSlash />
+                                                    )}
+                                                </button>
+                                                <button
+                                                    className="btn btn-outline-danger btn-sm"
+                                                    onClick={() => handleDeleteNotification(notification._id)}
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
