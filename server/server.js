@@ -10,7 +10,7 @@ const studentRoutes = require('./routes/student');
 const staffRoutes = require('./routes/staff');
 const tutorRoutes = require('./routes/tutor');
 const adminRoutes = require('./routes/admin');
-const notificationRoutes = require('./routes/notifications');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Initialize express app
 const app = express();
